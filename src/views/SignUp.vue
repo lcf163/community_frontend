@@ -12,7 +12,7 @@
       </div>
       <div class="form-group">
         <label for="re_pass">确认密码</label>
-        <input type="password" class="form-control" name="re_pass" id="re_pass" placeholder="确认密码"  v-model="re_password"/>
+        <input type="password" class="form-control" name="re_pass" id="re_pass" placeholder="确认密码"  v-model="confirm_password"/>
       </div>
       <div class="form-btn">
         <button type="button" class="btn btn-info" @click="submit">提交</button>
@@ -28,7 +28,7 @@ export default {
 		return {
 			username: "",
 			password: "",
-			re_password: "",
+			confirm_password: "",
 			submitted: false
 		};
 	},
@@ -45,15 +45,16 @@ export default {
 				data: JSON.stringify({
 					username: this.username,
 					password: this.password,
-					re_password: this.re_password
+					confirm_password: this.confirm_password
 				})
 			}).then((res)=>{
-				console.log(res.data);
+				console.log(res);
 				if (res.code == 1000) {
           console.log('signup success');
           this.$router.push({ name: "Login" });
 				}else{
-          console.log(res.msg);
+          // console.log(res.msg);
+          console.log(res.message);
         }
 			}).catch((error)=>{
 				console.log(error)

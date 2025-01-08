@@ -18,21 +18,21 @@
         <button class="btn-publish" @click="goPublish">发表</button>
       </div>
       <ul class="c-l-list">
-        <li class="c-l-item"  v-for="post in postList" :key="post.id">
+        <li class="c-l-item"  v-for="post in postList" :key="post.post_id">
           <div class="post">
             <a class="vote">
               <span class="iconfont icon-up"
-              @click="vote(post.id, '1')"
+              @click="vote(post.post_id, '1')"
               ></span>
             </a>
             <span class="text">{{post.vote_num}}</span>
             <a class="vote">
               <span class="iconfont icon-down"
-              @click="vote(post.id, '-1')"
+              @click="vote(post.post_id, '-1')"
               ></span>
             </a>
           </div>
-          <div class="l-container" @click="goDetail(post.id)">
+          <div class="l-container" @click="goDetail(post.post_id)">
             <h4 class="con-title">{{post.title}}</h4>
             <div class="con-memo">
               <p>{{post.content}}</p>
@@ -141,17 +141,18 @@ export default {
           order: this.order,
         }
       })
-        .then(response => {
-          console.log(response.data, 222);
-          if (response.code == 1000) {
-            this.postList = response.data;
-          } else {
-            console.log(response.msg);
-          }
-        })
-        .catch(error => {
-          console.log(error);
-        });
+      .then(response => {
+        console.log(response.data);
+        if (response.code == 1000) {
+          this.postList = response.data;
+        } else {
+          // console.log(response.msg);
+          console.log(response.message);
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      });
     },
     vote(post_id, direction){
       this.$axios({
@@ -162,16 +163,17 @@ export default {
           direction: direction,
         })
       })
-        .then(response => {
-          if (response.code == 1000) {
-            console.log("vote success");
-          } else {
-            console.log(response.msg);
-          }
-        })
-        .catch(error => {
-          console.log(error);
-        });
+      .then(response => {
+        if (response.code == 1000) {
+          console.log("vote success");
+        } else {
+          // console.log(response.msg);
+          console.log(response.message);
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      });
     }
   },
   mounted: function() {

@@ -77,21 +77,30 @@ export default {
   },
   methods:{
     getPostDetail() {
+      const postId = this.$route.params.id; // 获取帖子 ID
+      if (!postId) {
+          console.error("帖子 ID 无效");
+          // 可以选择重定向到错误页面或显示错误消息
+          this.$router.push({ name: "Home" }); // 重定向到首页
+          return;
+      }
+
       this.$axios({
-        method: "get",
-        url: "/post/"+ this.$route.params.id,
+            method: "get",
+            url: "/post/" + postId,
       })
-        .then(response => {
-          console.log(1, response.data);
-          if (response.code == 1000) {
-            this.post = response.data;
-          } else {
-            console.log(response.msg);
-          }
-        })
-        .catch(error => {
-          console.log(error);
-        });
+      .then(response => {
+        console.log(response.data);
+        if (response.code == 1000) {
+          this.post = response.data;
+        } else {
+          // console.log(response.msg);
+          console.log(response.message);
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      });
     },
   },
   mounted: function() {

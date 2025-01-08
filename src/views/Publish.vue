@@ -1,40 +1,31 @@
-
 <template>
   <div class="content">
     <div class="left">
       <div class="post-name">我好想写点什么</div>
       <div class="post-type">
-        <input type="text" class="post-type-value" placeholder="选择一个频道" v-model="selectCommunity.name" @click="showCommunity()"/>
+        <input type="text" class="post-type-value" placeholder="选择一个频道" 
+        v-model="selectCommunity.community_name" 
+        @click="showCommunity()"/>
         <ul class="post-type-options" v-show="showCommunityList">
           <li class="post-type-cell"
             v-for="(community, index) in communityList"
             :key="community.id"
             @click="selected(index)"
           >
-            {{community.name}}
+            {{community.community_name}}
           </li>
         </ul>
         <i class="p-icon"></i>
       </div>
       <div class="post-content">
-        <ul class="cat">
-          <li class="cat-item active">
-            <i class="iconfont icon-edit"></i>post
-          </li>
-          <li class="cat-item">
-            <i class="iconfont icon-image"></i>image/video
-          </li>
-        </ul>
         <div class="post-sub-container">
           <div class="post-sub-header">
-            <textarea class="post-title" id cols="30" rows="10" v-model="title" placeholder="标题"></textarea>
-            <span class="textarea-num">0/300</span>
+            <textarea class="post-title" cols="30" rows="10" v-model="title" placeholder="标题"></textarea>
+            <span class="textarea-num">{{ title.length }}/300</span>
           </div>
-          <!---此处放置富文本--->
           <div class="post-text-con">
             <textarea
               class="post-content-t"
-              id
               cols="30"
               rows="10"
               v-model="content"
@@ -50,6 +41,7 @@
         </div>
       </div>
     </div>
+
     <div class="right">
       <div class="post-rank">
         <h5 class="p-r-title">
@@ -79,43 +71,50 @@ export default {
   },
   methods: {
     submit() {
+      if (!this.title || !this.content || !this.selectCommunity.community_id) {
+        alert("请填写标题、内容并选择一个频道！");
+        return;
+      }
       this.$axios({
         method: "post",
         url: "/post",
         data: JSON.stringify({
           title: this.title,
           content: this.content,
-          community_id: this.selectCommunity.id
+          community_id: this.selectCommunity.community_id
         })
       })
-        .then(response => {
-          console.log(response.data);
-          if (response.code == 1000) {
-            this.$router.push({ path: this.redirect || "/" });
-          } else {
-            console.log(response.msg);
-          }
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    },
+      .then(response => {
+        console.log(response);
+        // console.log(response.data);
+        if (response.code == 1000) {
+          this.$router.push({ path: this.redirect || "/" });
+        } else {
+          // console.log(response.msg);
+          console.log(response.message);
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  },
     getCommunityList() {
       this.$axios({
         method: "get",
         url: "/community"
       })
-        .then(response => {
-          console.log(response.data);
-          if (response.code == 1000) {
-            this.communityList = response.data;
-          } else {
-            console.log(response.msg);
-          }
-        })
-        .catch(error => {
-          console.log(error);
-        });
+      .then(response => {
+        console.log(response.data);
+        if (response.code == 1000) {
+          this.communityList = response.data;
+        } else {
+          // console.log(response.msg);
+          console.log(response.message);
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      });
     },
     showCommunity(){
       this.showCommunityList = !this.showCommunityList;
@@ -131,6 +130,7 @@ export default {
   }
 };
 </script>
+
 <style lang="less" scoped>
 .content {
   max-width: 100%;
