@@ -1,0 +1,15 @@
+## 其他
+.cursorignore
+
+## IDE
+
+## 编译和调试
+node_modules/
+../*.js
+
+
+## 部署
+
+
+## 静态资源
+/public/*
