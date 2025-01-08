@@ -1,4 +1,4 @@
-# Bluebell Frontend
+ Bluebell Frontend
 
 ## 项目简介
 Bluebell Frontend 是一个基于 Vue.js 的现代前端应用程序，旨在提供一个用户友好的社区平台。用户可以在平台上发布帖子、评论、投票，并与其他用户进行互动。该项目采用组件化开发，支持响应式设计，适用于各种设备。
