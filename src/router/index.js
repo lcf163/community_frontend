@@ -8,6 +8,8 @@ import Content from '../views/Content.vue'
 import Publish from '../views/Publish.vue'
 import Login from '../views/Login.vue'
 import SignUp from '../views/SignUp.vue'
+import Community from '../views/Community.vue'
+import CommunityList from '../views/CommunityList.vue'
 
 // 解决 Vue Router 的 push 方法重复点击报错的问题
 const originalPush = VueRouter.prototype.push;
@@ -30,11 +32,6 @@ const routes = [
     name: 'Content', // 路由名称
     component: Content // 对应的组件
   },
-  // {
-  //   path: '/community/:id', // 社区页面的路径（注释掉的代码）
-  //   name: 'Community',
-  //   component: Community
-  // },
   {
     path: '/publish', // 发布帖子路径
     name: 'Publish', // 路由名称
@@ -50,7 +47,17 @@ const routes = [
     path: '/signup', // 注册路径
     name: "SignUp", // 路由名称
     component: SignUp // 对应的组件
-  }
+  },
+  {
+    path: '/community/list',
+    name: 'CommunityList',
+    component: CommunityList
+  },
+  {
+    path: '/community/:id',
+    name: 'Community',
+    component: Community
+  },
 ]
 
 // 创建 VueRouter 实例

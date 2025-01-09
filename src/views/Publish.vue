@@ -4,14 +4,9 @@
       <div class="post-name">我好想写点什么</div>
       <div class="post-type">
         <input type="text" class="post-type-value" placeholder="选择一个频道" 
-        v-model="selectCommunity.community_name" 
-        @click="showCommunity()"/>
+        v-model="selectCommunity.community_name" @click="showCommunity()"/>
         <ul class="post-type-options" v-show="showCommunityList">
-          <li class="post-type-cell"
-            v-for="(community, index) in communityList"
-            :key="community.id"
-            @click="selected(index)"
-          >
+          <li class="post-type-cell" v-for="(community, index) in communityList" :key="community.id" @click="selected(index)">
             {{community.community_name}}
           </li>
         </ul>
@@ -24,13 +19,7 @@
             <span class="textarea-num">{{ title.length }}/300</span>
           </div>
           <div class="post-text-con">
-            <textarea
-              class="post-content-t"
-              cols="30"
-              rows="10"
-              v-model="content"
-              placeholder="内容"
-            ></textarea>
+            <textarea class="post-content-t" cols="30" rows="10" v-model="content" placeholder="内容"></textarea>
           </div>
         </div>
         <div class="post-footer">
@@ -48,9 +37,10 @@
           <i class="p-r-icon"></i>发帖规范
         </h5>
         <ul class="p-r-content">
-          <li class="p-r-item">1.网络不是法外之地</li>
-          <li class="p-r-item">2.网络不是法外之地</li>
-          <li class="p-r-item">3.网络不是法外之地</li>
+          <li class="p-r-item">1.文明用语：请使用礼貌和尊重的用语，不要使用任何种族歧视、性别歧视或其他不当言论。</li>
+          <li class="p-r-item">2.主题明确：请确保您的主题与所在板块或话题相关，并且帖子内容明确。</li>
+          <li class="p-r-item">3.不要发广告：请不要在论坛上发布广告或推销产品，这些帖子会被管理员删除。</li>
+          <li class="p-r-item">4.不涉及侵权、违法、敏感内容：请确保您的帖子不会侵犯任何个人或组织的权利，不包含非法内容。</li>
         </ul>
       </div>
     </div>
@@ -130,10 +120,28 @@ export default {
       this.selectCommunity = {};
       this.showCommunityList = false;
       this.$router.push({ name: "Home" });
+    },
+    initSelectedCommunity() {
+      const communityInfo = this.$route.params.communityInfo;
+      if (communityInfo) {
+        this.selectCommunity = {
+          community_id: communityInfo.community_id,
+          community_name: communityInfo.community_name
+        };
+        console.log('已预选社区:', this.selectCommunity);
+      }
     }
   },
-  mounted: function() {
+  mounted() {
     this.getCommunityList();
+    this.initSelectedCommunity();
+  },
+  watch: {
+    '$route'(to) {
+      if (to.name === 'Publish') {
+        this.initSelectedCommunity();
+      }
+    }
   }
 };
 </script>

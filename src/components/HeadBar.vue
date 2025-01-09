@@ -1,9 +1,9 @@
 <template>
   <header class="header">
-      <span class="logo" @click="goIndex">bluebell</span>
+    <span class="logo" @click="goIndex">bluebell</span>
     <div class="search">
-      <label class="s-logo"></label>
-      <input type="text" class="s-input" placeholder="搜索" />
+      <!-- <label class="s-logo"></label> -->
+      <!-- <input type="text" class="s-input" placeholder="搜索" /> -->
     </div>
     <div class="btns">
       <div v-show="!isLogin">

@@ -49,25 +49,16 @@
     </div>
     <div class="right">
       <div class="communities">
-        <h2 class="r-c-title">今日火热频道排行榜</h2>
-        <ul class="r-c-content">
+        <h2 class="r-c-title">社区分类列表</h2>
+        <ul class="r-c-content" v-for="community in communityList" :key="community.community_id" 
+          @click="goCommunityDetail(community.community_id)">
           <li class="r-c-item">
-            <span class="index">1</span>
+            <span class="index">{{ community.community_id }}</span>
             <i class="icon"></i>
-            b/coding
-          </li>
-          <li class="r-c-item">
-            <span class="index">2</span>
-            <i class="icon"></i>
-            b/tree_hole
-          </li>
-          <li class="r-c-item">
-            <span class="index">3</span>
-            <i class="icon"></i>
-            b/job
+            <p>{{ community.community_name }}</p>
           </li>
         </ul>
-        <button class="view-all">查看所有</button>
+        <button class="view-all" @click="viewAllCommunities">查看所有社区</button>
       </div>
       <div class="r-trending">
         <h2 class="r-t-title">持续热门频道</h2>
@@ -124,7 +115,8 @@ export default {
         total: 0
       },
       keyword: '',
-      isSearch: false
+      isSearch: false,
+      communityList: [],
     };
   },
   methods: {
@@ -156,6 +148,9 @@ export default {
     },
     goDetail(id){
       this.$router.push({ name: "Content", params: { id: id }});
+    },
+    goCommunityDetail(id) {
+      this.$router.push({ name: "Community", params: { id: id }});
     },
     getPostList() {
       console.log('请求参数:', {
@@ -196,6 +191,26 @@ export default {
         console.error(error);
         this.postList = [];
         this.pageTotal = { total: 0 };
+      });
+    },
+    getCommunityList() {      
+      this.$axios({
+        method: "get",
+        url: "/community",
+      })
+      .then(response => {
+        console.log("获取社区列表响应:", response);
+        if (response.code === 1000) {
+          this.communityList = response.data;
+          console.log("社区列表数据:", this.communityList);
+        } else {
+          console.log("获取社区列表失败:", response.message);
+          this.communityList = [];
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        this.communityList = [];
       });
     },
     vote(post_id, direction){
@@ -249,9 +264,19 @@ export default {
         console.log(response.message);
       }
     },
+    viewAllCommunities() {
+      this.$router.push('/community/list');
+      // this.$router.push({ 
+      //   name: "CommunityList"
+      // });
+    },
+    goCommunityList() {
+      this.$router.push({ name: 'CommunityList' });
+    }
   },
   mounted() {
     this.getPostList();
+    this.getCommunityList();
   },
   computed:{
     timeOrder(){
@@ -469,7 +494,6 @@ export default {
         }
       }
     }
-
     .pagination-block {
       background-color: #ffffff;
       padding: 16px;
@@ -527,7 +551,7 @@ export default {
           .icon {
             width: 32px;
             height: 32px;
-            background-image: url("../assets/images/avatar.png");
+            background-image: url("../assets/images/community.png");
             background-repeat: no-repeat;
             background-size: cover;
             margin-right: 20px;
@@ -625,6 +649,65 @@ export default {
             box-sizing: border-box;
             text-align: center;
           }
+        }
+      }
+    }
+    .right-topic {
+      h5 {
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 18px;
+        color: #1a1a1b;
+        text-transform: uppercase;
+        padding-bottom: 10px;
+      }
+      .rank {
+        .r-t-cell {
+          display: flex;
+          display: -webkit-flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 16px;
+          .r-t-cell-info {
+            display: flex;
+            align-items: center;
+            .avatar {
+              width: 32px;
+              height: 32px;
+              background: url("../assets/images/avatar.png") no-repeat;
+              background-size: cover;
+              margin-right: 10px;
+            }
+            .info {
+              .info-title {
+                font-size: 12px;
+                font-weight: 500;
+                line-height: 16px;
+                text-overflow: ellipsis;
+                width: 144px;
+              }
+              .info-num {
+                font-size: 12px;
+                font-weight: 400;
+                line-height: 16px;
+                padding-bottom: 4px;
+              }
+            }
+          }
+        }
+      }
+      .view-all-btn {
+        width: 100%;
+        padding: 8px;
+        margin-top: 10px;
+        background-color: #0079d3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        
+        &:hover {
+          background-color: #006cbd;
         }
       }
     }
