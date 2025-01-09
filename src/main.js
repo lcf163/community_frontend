@@ -1,5 +1,7 @@
 // 导入 Vue 和其他依赖
 import Vue from 'vue'
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
 import App from './App.vue' // 主应用组件
 import router from './router' // 路由配置
 import store from './store' // Vuex 状态管理
@@ -10,6 +12,8 @@ Vue.prototype.$axios = axios;
 
 // 关闭 Vue 的生产提示
 Vue.config.productionTip = false
+
+Vue.use(ElementUI)  // 使用 Element UI
 
 // 定义全局前置路由守卫
 router.beforeEach((to, from, next) => {
@@ -38,6 +42,18 @@ router.beforeEach((to, from, next) => {
     }
   }
 })
+
+// 在 axios 配置后添加
+axios.interceptors.response.use(
+  response => {
+    console.log("API响应拦截器:", response);
+    return response;
+  },
+  error => {
+    console.error("API错误拦截器:", error);
+    return Promise.reject(error);
+  }
+);
 
 // 创建 Vue 实例
 new Vue({

@@ -3,48 +3,48 @@
     <div class="left">
       <!-- <h4 class="c-l-title">热门帖子</h4> -->
       <div class="c-l-header">
-        <div class="new btn-iconfont"
-        :class="{ active: timeOrder }"
-        @click="selectOrder('time')"
-        >
+        <div class="new btn-iconfont" :class="{ active: timeOrder }" @click="selectOrder('time')">
           <i class="iconfont icon-polygonred"></i>New
         </div>
-        <div class="top btn-iconfont"
-         :class="{ active: scoreOrder }"
-         @click="selectOrder('score')"
-        >
+        <div class="top btn-iconfont" :class="{ active: scoreOrder }" @click="selectOrder('score')">
           <i class="iconfont icon-top"></i>Score
         </div>
+        <div class="search">
+            <i class="search-icon el-icon-search" @click="searchPost"></i>
+            <input type="text" class="s-input" v-model="keyword" @keydown.enter="searchPost"/>
+          </div>
         <button class="btn-publish" @click="goPublish">发表</button>
       </div>
       <ul class="c-l-list">
-        <li class="c-l-item"  v-for="post in postList" :key="post.post_id">
-          <div class="post">
-            <a class="vote">
-              <span class="iconfont icon-up"
-              @click="vote(post.post_id, '1')"
-              ></span>
-            </a>
-            <span class="text">{{post.vote_num}}</span>
-            <a class="vote">
-              <span class="iconfont icon-down"
-              @click="vote(post.post_id, '-1')"
-              ></span>
-            </a>
-          </div>
-          <div class="l-container" @click="goDetail(post.post_id)">
-            <h4 class="con-title">{{post.title}}</h4>
-            <div class="con-memo">
-              <p>{{post.content}}</p>
+          <li class="c-l-item" v-for="post in postList" :key="post.post_id">
+            <div class="post">
+              <a class="vote">
+                <span class="iconfont icon-up" @click="vote(post.post_id, 1)"></span>
+              </a>
+              <span class="text">{{ post.vote_num }}</span>
+              <a class="vote">
+                <span class="iconfont icon-down" @click="vote(post.post_id, -1)"></span>
+              </a>
             </div>
-            <!-- <div class="user-btn">
+            <div class="l-container" @click="goDetail(post.post_id)">
+              <h4 class="con-title">{{ post.title }}</h4>
+              <div class="con-memo">
+                <p>{{ post.content }}</p>
+              </div>
+              <!-- <div class="user-btn">
               <span class="btn-item">
                 <i class="iconfont icon-comment"></i>
                 <span>{{post.comments}} comments</span>
               </span>
             </div> -->
-          </div>
-        </li>
+            </div>
+          </li>
+        <div class="pagination-block">
+            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="pageNumber"
+              :page-sizes="[5, 10, 20, 30]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
+              :total="pageTotal?.total || 0">
+            </el-pagination>
+        </div>
       </ul>
     </div>
     <div class="right">
@@ -110,21 +110,46 @@
 
 <script>
 // @ is an alias to /src
-
+import Vue from 'vue';
 export default {
   name: "Home",
   components: {},
   data() {
     return {
       order: "time",
-      page: 1,
-      postList: []
+      postList: [],
+      pageNumber: 1,
+      pageSize: 5,
+      pageTotal: {
+        total: 0
+      },
+      keyword: '',
+      isSearch: false
     };
   },
   methods: {
     selectOrder(order){
       this.order = order;
       this.getPostList()
+    },
+    handleCurrentChange(val) {
+      console.log('当前页:', val);
+      this.pageNumber = val;
+      if (!this.isSearch) {
+        this.getPostList();
+      } else {
+        this.searchPost();
+      }
+    },
+    handleSizeChange(val) {
+      console.log('每页条数:', val);
+      this.pageSize = val;
+      this.pageNumber = 1;
+      if (!this.isSearch) {
+        this.getPostList();
+      } else {
+        this.searchPost();
+      }
     },
     goPublish(){
       this.$router.push({ name: "Publish" });
@@ -133,25 +158,44 @@ export default {
       this.$router.push({ name: "Content", params: { id: id }});
     },
     getPostList() {
+      console.log('请求参数:', {
+        page: this.pageNumber,
+        size: this.pageSize,
+        order: this.order
+      });
+      
       this.$axios({
         method: "get",
         url: "/posts2",
         params: {
-          page: this.page,
+          page: this.pageNumber,
+          size: this.pageSize,
           order: this.order,
         }
       })
       .then(response => {
         console.log(response.data);
-        if (response.code == 1000) {
-          this.postList = response.data;
+        console.log(response.data.page);
+        if (response.code === 1000) {
+          this.postList = response.data.list;
+          this.pageTotal = {
+            total: response.data.page.total
+          };
+          console.log('更新后的分页数据:', {
+            pageNumber: this.pageNumber,
+            pageSize: this.pageSize,
+            total: this.pageTotal.total
+          });
         } else {
-          // console.log(response.msg);
           console.log(response.message);
+          this.postList = [];
+          this.pageTotal = { total: 0 };
         }
       })
       .catch(error => {
-        console.log(error);
+        console.error(error);
+        this.postList = [];
+        this.pageTotal = { total: 0 };
       });
     },
     vote(post_id, direction){
@@ -166,17 +210,47 @@ export default {
       .then(response => {
         if (response.code == 1000) {
           console.log("vote success");
+          this.getPostList();
+        } else if (response.code == 1009) {
+          Vue.prototype.$message.error('请勿重复投票')
+        } else if (response.code == 1010) {
+          Vue.prototype.$message.error('已过投票时间')
         } else {
-          // console.log(response.msg);
           console.log(response.message);
+          Vue.prototype.$message.error('请先登录')
         }
       })
       .catch(error => {
         console.log(error);
+      })
+    },
+    async searchPost() {
+      if (!this.keyword) {
+        this.isSearch = false;
+        this.getPostList();
+        return;
+      }
+      
+      this.isSearch = true;
+      const response = await this.$axios({
+        method: "get",
+        url: "/search",
+        params: {
+          page: this.pageNumber,
+          size: this.pageSize,
+          search: this.keyword
+        }
       });
-    }
+      if (response.code === 1000) {
+        console.log(response.data);
+        this.postList = response.data.list;
+        this.pageTotal = response.data.page;
+      } else {
+        console.log(response.message);
+      }
+    },
   },
-  mounted: function() {
+  mounted() {
     this.getPostList();
   },
   computed:{
@@ -249,6 +323,47 @@ export default {
       .top {
         font-size: 14px;
       }
+      .search {
+        flex-grow: 0.5;
+        margin: 0 auto;
+        max-width: 650px;
+        position: relative;
+        display: flex;
+        display: -webkit-flex;
+        align-items: center;
+        border-radius: 4px;
+        .search-icon {
+          width: 18px;
+          height: 18px;
+          line-height: 18px;
+          background-size: cover;
+          display: inline-block;
+          position: absolute;
+          cursor: pointer;
+          border-radius: 4px;
+          right: 1rem;
+          padding: 5px;
+
+          &:hover {
+            background: silver;
+          }
+        }
+        .s-input {
+          flex-grow: 1;
+          -webkit-appearance: none;
+          appearance: none;
+          background-color: #f6f7f8;
+          border-radius: 4px;
+          border: 1px solid #edeff1;
+          box-shadow: none;
+          color: #c1c1c1;
+          display: block;
+          height: 36px;
+          outline: none;
+          width: 100%;
+          text-indent: 1rem;
+        }
+      }
       .btn-publish {
         width: 64px;
         height: 32px;
@@ -281,36 +396,36 @@ export default {
       }
     }
     .c-l-list {
+      background-color: #ffffff;
+      border-radius: 4px;
       .c-l-item {
-        list-style: none;
-        border-radius: 4px;
-        padding-left: 40px;
-        cursor: pointer;
-        border: 1px solid #ccc;
-        margin-bottom: 10px;
-        background-color: rgba(255, 255, 255, 0.8);
-        color: #878a8c;
+        display: flex;
+        padding: 8px 0;
         position: relative;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-bottom: 10px;
         .post {
-          align-items: center;
-          box-sizing: border-box;
-          display: -ms-flexbox;
           display: flex;
-          -ms-flex-direction: column;
           flex-direction: column;
-          height: 100%;
-          left: 0;
-          padding: 8px 4px 8px 0;
-          position: absolute;
-          top: 0;
+          align-items: center;
           width: 40px;
+          padding: 8px 4px;
+          background-color: #f8f9fa;
           border-left: 4px solid transparent;
-          background: #f8f9fa;
-          .iconfont {
-            margin-right: 0;
-          }
-          .down {
-            transform: scaleY(-1);
+          border-radius: 4px 0 0 4px;
+          .vote {
+            cursor: pointer;
+            color: #878A8C;
+            padding: 4px;
+            &:hover {
+              background-color: #e8e8e8;
+              border-radius: 2px;
+            }
+            .iconfont {
+              font-size: 16px;
+            }
           }
           .text {
             color: #1a1a1b;
@@ -318,47 +433,51 @@ export default {
             font-weight: 700;
             line-height: 16px;
             pointer-events: none;
-            word-break: normal;
+            margin: 4px 0;
           }
         }
         .l-container {
-          padding: 15px;
+          flex: 1;
+          padding: 8px 16px;
+          cursor: pointer;
           .con-title {
-            color: #000000;
+            color: #1a1a1b;
             font-size: 18px;
             font-weight: 500;
             line-height: 22px;
-            text-decoration: none;
-            word-break: break-word;
+            margin-bottom: 8px;
+            &:hover {
+              color: #0079d3;
+            }
           }
           .con-memo {
-            margin-top: 10px;
-            margin-bottom: 10px;
-          }
-          .con-cover {
-            height: 512px;
-            width: 100%;
-            background: url("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1585999647247&di=7e9061211c23e3ed9f0c4375bb3822dc&imgtype=0&src=http%3A%2F%2Fi1.hdslb.com%2Fbfs%2Farchive%2F04d8cda08e170f4a58c18c45a93c539375c22162.jpg")
-              no-repeat;
-            background-size: cover;
-            margin-top: 10px;
-            margin-bottom: 10px;
-          }
-          .user-btn {
-            font-size: 14px;
-            display: flex;
-            display: -webkit-flex;
-            .btn-item {
-              display: flex;
-              display: -webkit-flex;
-              margin-right: 10px;
-              .iconfont {
-                margin-right: 4px;
-              }
+            p {
+              color: #4c4c4c;
+              font-size: 14px;
+              line-height: 21px;
+              word-break: break-word;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              display: -webkit-box;
+              -webkit-line-clamp: 3;
+              -webkit-box-orient: vertical;
             }
           }
         }
+        &:hover {
+          border-color: #898989;
+        }
       }
+    }
+
+    .pagination-block {
+      background-color: #ffffff;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
   }
   .right {

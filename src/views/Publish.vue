@@ -35,7 +35,7 @@
         </div>
         <div class="post-footer">
           <div class="btns">
-            <button class="btn">取消</button>
+            <button class="btn" @click="cancel()">取消</button>
             <button class="btn" @click="submit()">发表</button>
           </div>
         </div>
@@ -123,6 +123,13 @@ export default {
       this.selectCommunity = this.communityList[index];
       this.showCommunityList = false;
       console.log(this.selectCommunity)
+    },
+    cancel() {
+      this.title = "";
+      this.content = "";
+      this.selectCommunity = {};
+      this.showCommunityList = false;
+      this.$router.push({ name: "Home" });
     }
   },
   mounted: function() {
