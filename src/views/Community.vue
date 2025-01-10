@@ -32,11 +32,11 @@
 				<h5 class="t-header"></h5>
 				<div class="t-info">
 					<a class="avatar"></a>
-					<span class="topic-name">topic: {{ community.community_name }}</span>
+					<span class="topic-name">社区名: {{ community.community_name }}</span>
 					<span class="publish" @click="goPublish(community.community_id)">发表</span>
 				</div>
-				<p class="t-desc">{{ community.introduction }}</p>
-				<p class="t-create-time">{{ community.create_time }}</p>
+				<p class="t-desc">社区简介：{{ community.introduction }}</p>
+				<p class="t-create-time">创建于：{{ formatTime(community.create_time) }}</p>
 				<!-- <button class="topic-btn" @click="goCommunityDetail(community.community_id)">JOIN</button> -->
 			</div>
 		</div>
@@ -90,7 +90,7 @@ export default {
 					community_id: this.$route.params.id,
 					page: this.pageNumber,
 					size: this.pageSize,
-					order: 'score'
+					order: 'time'
 				}
 			})
 			.then(response => {
@@ -133,7 +133,6 @@ export default {
 			this.$router.push({ name: "Content", params: { id: id } });
 		},
 		goPublish(id) {
-			// this.$router.push({ name: "Publish", params: { id: id } });
 			this.$router.push({ 
 				name: "Publish", 
 				params: { 
@@ -142,6 +141,18 @@ export default {
 				} 
 			});
 		},
+		formatTime(timestamp) {
+			if (!timestamp) return '';
+			
+			const date = new Date(timestamp);
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+			
+			return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+		}
 	},
 	mounted() {
 		this.getCommunityDetail();

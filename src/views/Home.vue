@@ -50,7 +50,7 @@
     <div class="right">
       <div class="communities">
         <h2 class="r-c-title">社区分类列表</h2>
-        <ul class="r-c-content" v-for="community in communityList" :key="community.community_id" 
+        <ul class="r-c-content" v-for="community in limitedCommunityList" :key="community.community_id" 
           @click="goCommunityDetail(community.community_id)">
           <li class="r-c-item">
             <span class="index">{{ community.community_id }}</span>
@@ -59,41 +59,6 @@
           </li>
         </ul>
         <button class="view-all" @click="viewAllCommunities">查看所有社区</button>
-      </div>
-      <div class="r-trending">
-        <h2 class="r-t-title">持续热门频道</h2>
-        <ul class="rank">
-          <li class="r-t-cell">
-            <div class="r-t-cell-info">
-              <div class="avatar"></div>
-              <div class="info">
-                <span class="info-title">b/Book</span>
-                <p class="info-num">7.1k members</p>
-              </div>
-            </div>
-            <button class="join-btn">JOIN</button>
-          </li>
-          <li class="r-t-cell">
-            <div class="r-t-cell-info">
-              <div class="avatar"></div>
-              <div class="info">
-                <span class="info-title">b/coding</span>
-                <p class="info-num">3.2k members</p>
-              </div>
-            </div>
-            <button class="join-btn">JOIN</button>
-          </li>
-          <li class="r-t-cell">
-            <div class="r-t-cell-info">
-              <div class="avatar"></div>
-              <div class="info">
-                <span class="info-title">b/job</span>
-                <p class="info-num">2.5k members</p>
-              </div>
-            </div>
-            <button class="join-btn">JOIN</button>
-          </li>
-        </ul>
       </div>
     </div>
   </div>
@@ -117,6 +82,7 @@ export default {
       keyword: '',
       isSearch: false,
       communityList: [],
+      maxCommunities: 5,
     };
   },
   methods: {
@@ -125,7 +91,6 @@ export default {
       this.getPostList()
     },
     handleCurrentChange(val) {
-      console.log('当前页:', val);
       this.pageNumber = val;
       if (!this.isSearch) {
         this.getPostList();
@@ -134,7 +99,6 @@ export default {
       }
     },
     handleSizeChange(val) {
-      console.log('每页条数:', val);
       this.pageSize = val;
       this.pageNumber = 1;
       if (!this.isSearch) {
@@ -169,8 +133,6 @@ export default {
         }
       })
       .then(response => {
-        console.log(response.data);
-        console.log(response.data.page);
         if (response.code === 1000) {
           this.postList = response.data.list;
           this.pageTotal = {
@@ -199,12 +161,9 @@ export default {
         url: "/community",
       })
       .then(response => {
-        console.log("获取社区列表响应:", response);
         if (response.code === 1000) {
           this.communityList = response.data;
-          console.log("社区列表数据:", this.communityList);
         } else {
-          console.log("获取社区列表失败:", response.message);
           this.communityList = [];
         }
       })
@@ -266,9 +225,6 @@ export default {
     },
     viewAllCommunities() {
       this.$router.push('/community/list');
-      // this.$router.push({ 
-      //   name: "CommunityList"
-      // });
     },
     goCommunityList() {
       this.$router.push({ name: 'CommunityList' });
@@ -284,6 +240,9 @@ export default {
     },
     scoreOrder(){
       return this.order == "score";
+    },
+    limitedCommunityList() {
+      return this.communityList.slice(0, this.maxCommunities);
     }
   }
 };
@@ -298,6 +257,7 @@ export default {
   justify-content: center;
   margin: 48px auto 0;
   padding: 20px 24px;
+  
   .left {
     width: 640px;
     padding-bottom: 10px;
@@ -505,9 +465,12 @@ export default {
     }
   }
   .right {
-    width: 312px;
+    width: 310px;
     margin-left: 24px;
-    margin-top: 28px;
+    align-self: flex-start;
+    position: sticky;
+    top: 48px;
+    
     .communities {
       background-color: #ffffff;
       color: #1a1a1b;
@@ -516,6 +479,9 @@ export default {
       overflow: visible;
       word-wrap: break-word;
       margin-bottom: 20px;
+      position: sticky;
+      top: 48px;
+      
       .r-c-title {
         background-image: linear-gradient(
           0deg,
@@ -578,137 +544,6 @@ export default {
         width: 280px;
         color: #fff;
         margin: 20px 0 20px 16px;
-      }
-    }
-    .r-trending {
-      padding-top: 16px;
-      width: 312px;
-      background-color: #ffffff;
-      color: #1a1a1b;
-      fill: #1a1a1b;
-      border: 1px solid #cccccc;
-      border-radius: 4px;
-      overflow: visible;
-      word-wrap: break-word;
-      .r-t-title {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        line-height: 12px;
-        text-transform: uppercase;
-        background-color: #ffffff;
-        border-radius: 3px 3px 0 0;
-        color: #1a1a1b;
-        display: -ms-flexbox;
-        display: flex;
-        fill: #1a1a1b;
-        padding: 0 12px 12px;
-      }
-      .rank {
-        padding: 12px;
-        .r-t-cell {
-          display: flex;
-          display: -webkit-flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 16px;
-          .r-t-cell-info {
-            display: flex;
-          }
-          .avatar {
-            width: 32px;
-            height: 32px;
-            background: url("../assets/images/avatar.png") no-repeat;
-            background-size: cover;
-            margin-right: 10px;
-          }
-          .info {
-            margin-right: 10px;
-            .info-title {
-              font-size: 12px;
-              font-weight: 500;
-              line-height: 16px;
-              text-overflow: ellipsis;
-              width: 144px;
-            }
-            .info-num {
-              font-size: 12px;
-              font-weight: 400;
-              line-height: 16px;
-              padding-bottom: 4px;
-            }
-          }
-          .join-btn {
-            width: 106px;
-            height: 32px;
-            line-height: 32px;
-            background-color: #0079d3;
-            color: #ffffff;
-            border: 1px solid transparent;
-            border-radius: 4px;
-            box-sizing: border-box;
-            text-align: center;
-          }
-        }
-      }
-    }
-    .right-topic {
-      h5 {
-        font-size: 14px;
-        font-weight: 700;
-        line-height: 18px;
-        color: #1a1a1b;
-        text-transform: uppercase;
-        padding-bottom: 10px;
-      }
-      .rank {
-        .r-t-cell {
-          display: flex;
-          display: -webkit-flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 16px;
-          .r-t-cell-info {
-            display: flex;
-            align-items: center;
-            .avatar {
-              width: 32px;
-              height: 32px;
-              background: url("../assets/images/avatar.png") no-repeat;
-              background-size: cover;
-              margin-right: 10px;
-            }
-            .info {
-              .info-title {
-                font-size: 12px;
-                font-weight: 500;
-                line-height: 16px;
-                text-overflow: ellipsis;
-                width: 144px;
-              }
-              .info-num {
-                font-size: 12px;
-                font-weight: 400;
-                line-height: 16px;
-                padding-bottom: 4px;
-              }
-            }
-          }
-        }
-      }
-      .view-all-btn {
-        width: 100%;
-        padding: 8px;
-        margin-top: 10px;
-        background-color: #0079d3;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        
-        &:hover {
-          background-color: #006cbd;
-        }
       }
     }
   }
