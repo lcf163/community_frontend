@@ -37,7 +37,6 @@
 				</div>
 				<p class="t-desc">社区简介：{{ community.introduction }}</p>
 				<p class="t-create-time">创建于：{{ formatTime(community.create_time) }}</p>
-				<!-- <button class="topic-btn" @click="goCommunityDetail(community.community_id)">JOIN</button> -->
 			</div>
 		</div>
 	</div>
@@ -144,14 +143,16 @@ export default {
 		formatTime(timestamp) {
 			if (!timestamp) return '';
 			
+			// 直接解析 UTC 时间字符串，不进行时区转换
 			const date = new Date(timestamp);
-			const year = date.getFullYear();
-			const month = String(date.getMonth() + 1).padStart(2, '0');
-			const day = String(date.getDate()).padStart(2, '0');
-			const hours = String(date.getHours()).padStart(2, '0');
-			const minutes = String(date.getMinutes()).padStart(2, '0');
+			const year = date.getUTCFullYear();
+			const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+			const day = String(date.getUTCDate()).padStart(2, '0');
+			const hours = String(date.getUTCHours()).padStart(2, '0');
+			const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+			const seconds = String(date.getUTCSeconds()).padStart(2, '0');
 			
-			return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+			return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 		}
 	},
 	mounted() {

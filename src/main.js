@@ -17,8 +17,8 @@ Vue.use(ElementUI)  // 使用 Element UI
 
 // 定义全局前置路由守卫
 router.beforeEach((to, from, next) => {
-  console.log(to); // 打印目标路由
-  console.log(from); // 打印来源路由
+  console.log('路由跳转:', { to, from });
+
   if (to.meta.requireAuth) { // 判断该路由是否需要登录权限
     if (localStorage.getItem("loginResult")) { // 判断本地是否存在 access_token
       next(); // 允许访问

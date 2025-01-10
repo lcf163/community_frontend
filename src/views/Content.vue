@@ -4,11 +4,11 @@
       <div class="container">
         <div class="post">
           <a class="vote">
-            <span class="iconfont icon-up"></span>
+            <span class="iconfont icon-up" @click="vote(post.post_id, 1)"></span>
           </a>
-          <span class="text">50.2k</span>
+          <span class="text">{{ post.vote_num }}</span>
           <a class="vote">
-            <span class="iconfont icon-down"></span>
+            <span class="iconfont icon-down" @click="vote(post.post_id, -1)"></span>
           </a>
         </div>
         <div class="l-container">
@@ -47,41 +47,44 @@
         <h5 class="t-header"></h5>
         <div class="t-info">
           <a class="avatar"></a>
-          <span class="topic-name">b/{{post.community_name}}</span>
+          <span class="topic-name">社区名：{{ post.community.community_name }}</span>
         </div>
-        <p class="t-desc">树洞 树洞 无限树洞的树洞</p>
-        <ul class="t-num">
-          <li class="t-num-item">
-            <p class="number">5.2m</p>
-            <span class="unit">Members</span>
-          </li>
-          <li class="t-num-item">
-            <p class="number">5.2m</p>
-            <span class="unit">Members</span>
-          </li>
-        </ul>
-        <div class="date">Created Apr 10, 2008</div>
-        <button class="topic-btn">JOIN</button>
+        <p class="t-desc">社区简介：{{ post.community.introduction }}</p>
+        <p class="t-create-time">创建于：{{ formatTime(post.community.create_time) }}</p>
+        <button class="topic-btn" @click="goCommunityDetail(post.community.community_id)">进入社区</button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import Vue from 'vue';
+
 export default {
   name: "Content",
   data(){
     return {
-      post:{},
+      post: {
+        vote_num: 0,
+        post_id: '',
+        title: '',
+        content: '',
+        create_time: '',
+        community: {
+          community_name: '',
+          introduction: '',
+          create_time: '',
+          community_id: ''
+        }
+      },
     }
   },
   methods:{
     getPostDetail() {
-      const postId = this.$route.params.id; // 获取帖子 ID
+      const postId = this.$route.params.id;
       if (!postId) {
           console.error("帖子 ID 无效");
-          // 可以选择重定向到错误页面或显示错误消息
-          this.$router.push({ name: "Home" }); // 重定向到首页
+          this.$router.push({ name: "Home" });
           return;
       }
 
@@ -94,14 +97,57 @@ export default {
         if (response.code == 1000) {
           this.post = response.data;
         } else {
-          // console.log(response.msg);
           console.log(response.message);
+          this.$router.push({ name: "Home" });
         }
       })
       .catch(error => {
         console.log(error);
+        this.$router.push({ name: "Home" });
       });
     },
+    vote(post_id, direction){
+      this.$axios({
+        method: "post",
+        url: "/vote",
+        data: {
+          post_id: post_id,
+          direction: direction,
+        }
+      })
+      .then(response => {
+        if (response.code == 1000) {
+          this.getPostDetail();
+        } else if (response.code == 1009) {
+          Vue.prototype.$message.error('请勿重复投票')
+        } else if (response.code == 1010) {
+          Vue.prototype.$message.error('已过投票时间')
+        } else {
+          console.log(response.message);
+          Vue.prototype.$message.error('请先登录')
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      })
+    },
+    goCommunityDetail(id) {
+      this.$router.push({ name: "Community", params: { id: id }});
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      
+      // 直接解析 UTC 时间字符串，不进行时区转换
+      const date = new Date(timestamp);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+      
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
   },
   mounted: function() {
     this.getPostDetail();
@@ -259,7 +305,6 @@ export default {
     margin-top: 32px;
     .topic-info {
       width: 100%;
-      // padding: 12px;
       cursor: pointer;
       background-color: #ffffff;
       color: #1a1a1b;
@@ -267,85 +312,78 @@ export default {
       border-radius: 4px;
       overflow: visible;
       word-wrap: break-word;
-      padding-bottom: 30px;
+      padding-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      
       .t-header {
         width: 100%;
-        height: 34px;
+        height: 40px;
         background: #0079d3;
+        margin-bottom: 15px;
       }
+      
       .t-info {
-        padding: 0 12px;
+        padding: 0 15px;
         display: flex;
-        display: -webkit-flex;
-        width: 100%;
-        height: 54px;
         align-items: center;
+        width: 100%;
+        height: 60px;
+        margin-bottom: 15px;
+        
         .avatar {
-          width: 54px;
-          height: 54px;
-          background: url("../assets/images/avatar.png") no-repeat;
+          width: 50px;
+          height: 50px;
+          background: url("../assets/images/community.png") no-repeat center;
           background-size: cover;
-          margin-right: 10px;
+          margin-right: 15px;
+          border-radius: 25px;
         }
+        
         .topic-name {
           height: 100%;
-          line-height: 54px;
+          line-height: 60px;
           font-size: 16px;
           font-weight: 500;
         }
       }
+      
       .t-desc {
         font-family: Noto Sans, Arial, sans-serif;
         font-size: 14px;
-        line-height: 21px;
+        line-height: 1.6;
         font-weight: 400;
         word-wrap: break-word;
-        margin-bottom: 8px;
-        padding: 0 12px;
+        margin-bottom: 15px;
+        padding: 0 15px;
       }
-      .t-num {
-        padding: 0 12px 20px 12px;
-        display: flex;
-        display: -webkit-flex;
-        align-items: center;
-        border-bottom: 1px solid #edeff1;
-        .t-num-item {
-          list-style: none;
-          display: flex;
-          display: -webkit-flex;
-          flex-direction: column;
-          width: 50%;
-          .number {
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 20px;
-          }
-          .unit {
-            font-size: 12px;
-            font-weight: 500;
-            line-height: 16px;
-            word-break: break-word;
-          }
-        }
-      }
-      .date {
+      
+      .t-create-time {
         font-family: Noto Sans, Arial, sans-serif;
         font-size: 14px;
         font-weight: 400;
-        line-height: 18px;
-        margin-top: 20px;
-        padding: 0 12px;
+        line-height: 1.4;
+        padding: 0 15px;
+        margin-bottom: 20px;
+        color: #666;
       }
+      
       .topic-btn {
-        width: 286px;
-        height: 34px;
-        line-height: 34px;
+        width: calc(100% - 30px);
+        height: 36px;
+        line-height: 36px;
         color: #ffffff;
-        margin: 12px auto 0 auto;
-        background: #003f6d;
+        margin: 0 15px;
+        background: #0079d3;
         border-radius: 4px;
-        box-sizing: border-box;
-        margin-left: 13px;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        
+        &:hover {
+          background: #005fa3;
+        }
       }
     }
   }
