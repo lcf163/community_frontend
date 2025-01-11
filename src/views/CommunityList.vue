@@ -73,13 +73,13 @@ export default {
             total: response.data.page?.total || 0
           };
         } else {
-          console.log("获取社区列表失败:", response.message);
+          console.log("getCommunityList fail:", response.message);
           this.communityList = [];
           this.pageTotal = { total: 0 };
         }
       })
       .catch(error => {
-        console.error("获取社区列表错误:", error);
+        console.error("getCommunityList error:", error);
         this.communityList = [];
         this.pageTotal = { total: 0 };
       });
@@ -104,40 +104,25 @@ export default {
 <style lang="less" scoped>
 .content {
   padding: 20px;
+  margin-top: 48px;
   
   .page-header {
     display: flex;
     align-items: center;
-    margin-bottom: 40px;
-    padding-top: 20px;
+    margin-bottom: 20px;
+    padding-top: 10px;
     
-    .back-btn {
-      padding: 8px 16px;
-      margin-right: 15px;
-      background-color: #f0f0f0;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #333;
-      
-      &:hover {
-        background-color: #e0e0e0;
-      }
-    }
-
     .page-title {
-      font-size: 24px;
+      font-size: 22px;
       margin: 0;
       flex-grow: 1;
       text-align: center;
       padding-right: 100px;
-      margin-top: 10px;
     }
   }
 
   .community-list {
-    margin-top: 30px;
+    margin-top: 20px;
   }
 
   .community-grid {
@@ -193,5 +178,8 @@ export default {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 4px;
 }
 </style> 

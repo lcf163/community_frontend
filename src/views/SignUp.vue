@@ -48,16 +48,13 @@ export default {
 					confirm_password: this.confirm_password
 				})
 			}).then((res)=>{
-				console.log(res);
 				if (res.code == 1000) {
-          console.log('signup success');
           this.$router.push({ name: "Login" });
 				}else{
-          // console.log(res.msg);
-          console.log(res.message);
+          console.log("signup fail:", res.message);
         }
-			}).catch((error)=>{
-				console.log(error)
+			}).catch((error) => {
+				console.error("signup error:", error);
 			})
 		}
 	}

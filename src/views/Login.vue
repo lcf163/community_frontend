@@ -43,17 +43,16 @@ export default {
 				})
 			})
       .then((res)=>{
-				console.log(res.data)
 				if (res.code == 1000) {
           localStorage.setItem("loginResult", JSON.stringify(res.data));
           this.$store.commit("login", res.data);
           this.$router.push({path: this.redirect || '/' })
 				} else {
-					// console.log(res.msg)
-          console.log(res.message)
+          console.log("login fail:", res.message)
 				}
-			}).catch((error)=>{
-				console.log(error)
+			})
+      .catch((error) => {
+				console.error("login error:", error)
 			})
 		}
 	}

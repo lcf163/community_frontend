@@ -83,7 +83,6 @@ export default {
     getPostDetail() {
       const postId = this.$route.params.id;
       if (!postId) {
-          console.error("帖子 ID 无效");
           this.$router.push({ name: "Home" });
           return;
       }
@@ -93,16 +92,15 @@ export default {
             url: "/post/" + postId,
       })
       .then(response => {
-        console.log(response.data);
         if (response.code == 1000) {
           this.post = response.data;
         } else {
-          console.log(response.message);
+          console.log("getPostDetail fail:", response.message);
           this.$router.push({ name: "Home" });
         }
       })
       .catch(error => {
-        console.log(error);
+        console.error("getPostDetail error:", error);
         this.$router.push({ name: "Home" });
       });
     },
@@ -118,17 +116,12 @@ export default {
       .then(response => {
         if (response.code == 1000) {
           this.getPostDetail();
-        } else if (response.code == 1009) {
-          Vue.prototype.$message.error('请勿重复投票')
-        } else if (response.code == 1010) {
-          Vue.prototype.$message.error('已过投票时间')
         } else {
-          console.log(response.message);
-          Vue.prototype.$message.error('请先登录')
+          Vue.prototype.$message.error(response.message)
         }
       })
       .catch(error => {
-        console.log(error);
+        console.error("vote error:", error);
       })
     },
     goCommunityDetail(id) {

@@ -75,17 +75,14 @@ export default {
         })
       })
       .then(response => {
-        console.log(response);
-        // console.log(response.data);
         if (response.code == 1000) {
           this.$router.push({ path: this.redirect || "/" });
         } else {
-          // console.log(response.msg);
-          console.log(response.message);
+          console.log("publish fail:", response.message);
         }
       })
       .catch(error => {
-        console.log(error);
+        console.error("publish error:", error);
       });
   },
     getCommunityList() {
@@ -94,16 +91,14 @@ export default {
         url: "/community"
       })
       .then(response => {
-        console.log(response.data);
         if (response.code == 1000) {
           this.communityList = response.data;
         } else {
-          // console.log(response.msg);
-          console.log(response.message);
+          console.log("getCommunityList fail:", response.message);
         }
       })
       .catch(error => {
-        console.log(error);
+        console.error("getCommunityList error:", error);
       });
     },
     showCommunity(){
@@ -112,7 +107,6 @@ export default {
     selected(index) {
       this.selectCommunity = this.communityList[index];
       this.showCommunityList = false;
-      console.log(this.selectCommunity)
     },
     cancel() {
       this.title = "";
@@ -128,7 +122,6 @@ export default {
           community_id: communityInfo.community_id,
           community_name: communityInfo.community_name
         };
-        console.log('已预选社区:', this.selectCommunity);
       }
     }
   },

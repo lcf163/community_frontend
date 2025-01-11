@@ -28,7 +28,6 @@ export default new Vuex.Store({
     // 初始化登录状态
     init(state) {
       let loginResult = JSON.parse(localStorage.getItem("loginResult")); // 从 localStorage 获取登录结果
-      console.log(localStorage.getItem("loginResult")); // 打印登录结果
       if (loginResult != null) {
         state.loginResult = loginResult; // 更新登录结果状态
       }

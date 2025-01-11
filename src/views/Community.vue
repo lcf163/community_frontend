@@ -70,15 +70,14 @@ export default {
 				url: "/community/" + this.$route.params.id,
 			})
 			.then(response => {
-				console.log(response.data);
 				if (response.code == 1000) {
 					this.community = response.data;
 				} else {
-					console.log(response.message);
+					console.log("getCommunityDetail fail:", response.message);
 				}
 			})
 			.catch(error => {
-				console.log(error);
+				console.error("getCommunityDetail error:", error);
 			});
 		},
 		getCommunityPostList() {
@@ -93,16 +92,15 @@ export default {
 				}
 			})
 			.then(response => {
-				console.log(response.data);
 				if (response.code == 1000) {
 					this.postList = response.data.list;
 					this.pageTotal = response.data.page;
 				} else {
-					console.log(response.message);
+					console.log("getCommunityPostList fail:", response.message);
 				}
 			})
 			.catch(error => {
-				console.log(error);
+				console.error("getCommunityPostList error:", error);
 			});
 		},
 		vote(post_id, direction) {
@@ -116,16 +114,13 @@ export default {
 			})
 			.then(response => {
 				if (response.code == 1000) {
-					console.log("vote success");
 					this.getCommunityPostList();
-				} else if (response.code == 1009) {
-					Vue.prototype.$message.error('请勿重复投票')
 				} else {
-					console.log(response.message);
+					Vue.prototype.$message.error(response.message)
 				}
 			})
 			.catch(error => {
-				console.log(error);
+				console.error("vote error:", error);
 			});
 		},
 		goDetail(id) {

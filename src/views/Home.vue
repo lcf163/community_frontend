@@ -117,12 +117,6 @@ export default {
       this.$router.push({ name: "Community", params: { id: id }});
     },
     getPostList() {
-      console.log('请求参数:', {
-        page: this.pageNumber,
-        size: this.pageSize,
-        order: this.order
-      });
-      
       this.$axios({
         method: "get",
         url: "/posts2",
@@ -138,19 +132,14 @@ export default {
           this.pageTotal = {
             total: response.data.page.total
           };
-          console.log('更新后的分页数据:', {
-            pageNumber: this.pageNumber,
-            pageSize: this.pageSize,
-            total: this.pageTotal.total
-          });
         } else {
-          console.log(response.message);
+          console.log("getPostList fail:", response.message);
           this.postList = [];
           this.pageTotal = { total: 0 };
         }
       })
       .catch(error => {
-        console.error(error);
+        console.error("getPostList error:", error);
         this.postList = [];
         this.pageTotal = { total: 0 };
       });
@@ -164,11 +153,12 @@ export default {
         if (response.code === 1000) {
           this.communityList = response.data;
         } else {
+          console.log("getCommunityList fail:", response.message);
           this.communityList = [];
         }
       })
       .catch(error => {
-        console.error(error);
+        console.error("getCommunityList error:", error);
         this.communityList = [];
       });
     },
@@ -183,19 +173,13 @@ export default {
       })
       .then(response => {
         if (response.code == 1000) {
-          console.log("vote success");
           this.getPostList();
-        } else if (response.code == 1009) {
-          Vue.prototype.$message.error('请勿重复投票')
-        } else if (response.code == 1010) {
-          Vue.prototype.$message.error('已过投票时间')
         } else {
-          console.log(response.message);
-          Vue.prototype.$message.error('请先登录')
+          Vue.prototype.$message.error(response.message)
         }
       })
       .catch(error => {
-        console.log(error);
+        console.error("vote error:", error);
       })
     },
     async searchPost() {
@@ -216,11 +200,10 @@ export default {
         }
       });
       if (response.code === 1000) {
-        console.log(response.data);
         this.postList = response.data.list;
         this.pageTotal = response.data.page;
       } else {
-        console.log(response.message);
+        console.log("searchPost fail:", response.message);
       }
     },
     viewAllCommunities() {

@@ -31,7 +31,6 @@ export default {
       return this.$store.getters.isLogin;
     },
     currUsername(){
-      console.log(this.$store.getters.username);
       return this.$store.getters.username;
     }
   },
