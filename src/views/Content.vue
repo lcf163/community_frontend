@@ -4,43 +4,72 @@
       <div class="container">
         <div class="post">
           <a class="vote">
-            <span class="iconfont icon-up" @click="vote(post.post_id, 1)"></span>
+            <span class="iconfont icon-up" @click="votePost(post.post_id, 1)"></span>
           </a>
-          <span class="text">{{ post.vote_num }}</span>
+          <span class="text">{{ post.vote_num || 0 }}</span>
           <a class="vote">
-            <span class="iconfont icon-down" @click="vote(post.post_id, -1)"></span>
+            <span class="iconfont icon-down" @click="votePost(post.post_id, -1)"></span>
           </a>
         </div>
         <div class="l-container">
           <h4 class="con-title">{{post.title}}</h4>
           <div class="con-info">{{post.content}}</div>
-          <div class="user-btn">
-            <span class="btn-item">
-              <i class="iconfont icon-comment"></i>comment
-            </span>
-          </div>
         </div>
       </div>
 
-      <!-- <div class="comment">
-        <div class="c-left">
-          <div class="line"></div>
-          <div class="c-arrow">
-                            <a class="vote"><span class="iconfont icon-up"></span></a>
-                            <a class="up down"></a>
+      <div class="comment-input">
+        <el-input
+          type="textarea"
+          :rows="2"
+          placeholder="写下你的评论..."
+          v-model="commentContent"
+        >
+        </el-input>
+        <div class="btn-wrapper">
+          <el-button class="cancel-btn" @click="cancelComment">取消评论</el-button>
+          <el-button
+            class="submit-btn"
+            type="primary"
+            @click="submitComment"
+            :loading="submitting"
+            :disabled="!commentContent.trim()"
+          >
+            {{ submitting ? '发表中...' : '发表评论' }}
+          </el-button>
+        </div>
+      </div>
+
+      <div class="comment-list">
+        <div class="user-btn">
+          <span class="btn-item">
+            <i class="iconfont icon-comment"></i> 全部评论
+          </span>
+        </div>
+        <div v-if="comments.length === 0" class="no-comments">
+          暂无评论，快来发表第一条评论吧！
+        </div>
+        <div v-else v-for="comment in comments" :key="comment.comment_id" class="comment">
+          <div class="c-left">
+            <div class="c-arrow">
+              <a class="vote">
+                <span class="iconfont icon-up" @click="voteComment(comment.comment_id, 1)"></span>
+              </a>
+              <span class="text">{{ comment.vote_num || 0 }}</span>
+              <a class="vote">
+                <span class="iconfont icon-down" @click="voteComment(comment.comment_id, -1)"></span>
+              </a>
+            </div>
+          </div>
+          <div class="c-right">
+            <div class="c-user-info">
+              <span class="name">{{ comment.author_name || '匿名用户' }}</span>
+              <span class="num">{{ comment.vote_num || 0 }} 点赞</span>
+              <span class="num">· {{ formatTime(comment.create_time) }}</span>
+            </div>
+            <p class="c-content">{{ comment.content }}</p>
           </div>
         </div>
-        <div class="c-right">
-          <div class="c-user-info">
-            <span class="name">mahlerific</span>
-            <span class="num">1.4k points</span>
-            <span class="num">· 5 hours ago</span>
-          </div>
-          <p
-            class="c-content"
-          >We're having the same experience in Yerevan, Armenia. Though you can see mountains all around the city on good days, now you can see even farther into Turkey and Iran. Every crag on the mountains around us is now clearer than ever.</p>
-        </div>
-      </div> -->
+      </div>
     </div>
     <div class="right">
       <div class="topic-info">
@@ -58,33 +87,35 @@
 </template>
 
 <script>
-import Vue from 'vue';
-
 export default {
   name: "Content",
   data(){
     return {
       post: {
+        author_name: '',
         vote_num: 0,
         post_id: '',
         title: '',
         content: '',
         create_time: '',
         community: {
+          community_id: '',
           community_name: '',
           introduction: '',
-          create_time: '',
-          community_id: ''
+          create_time: ''
         }
       },
+      comments: [],
+      commentContent: '',
+      submitting: false,
     }
   },
   methods:{
     getPostDetail() {
       const postId = this.$route.params.id;
       if (!postId) {
-          this.$router.push({ name: "Home" });
-          return;
+        this.$router.push({ name: "Home" });
+        return;
       }
 
       this.$axios({
@@ -95,37 +126,125 @@ export default {
         if (response.code == 1000) {
           this.post = response.data;
         } else {
-          console.log("getPostDetail fail:", response.message);
+          this.$message.error(response.message);
           this.$router.push({ name: "Home" });
         }
       })
       .catch(error => {
-        console.error("getPostDetail error:", error);
+        this.$message.error('getPostDetail ：' + error);
         this.$router.push({ name: "Home" });
+      }); 
+    },
+    votePost(post_id, direction) {
+      this.$axios.post("/vote", {
+        target_id: post_id,
+        target_type: 1,
+        direction: direction
+      })
+      .then(response => {
+        if (response.code === 1000) {
+          this.getPostDetail();
+        } else {
+          this.$message.error(response.message);
+        }
+      })
+      .catch(() => {
+        this.$message.error('votePost error');
       });
     },
-    vote(post_id, direction){
+    voteComment(comment_id, direction) {
       this.$axios({
         method: "post",
         url: "/vote",
         data: {
-          post_id: post_id,
+          target_id: comment_id,
+          target_type: 2, // 投票目标类型(1:帖子 2:评论)
           direction: direction,
         }
       })
       .then(response => {
-        if (response.code == 1000) {
-          this.getPostDetail();
+        if (response.code === 1000) {
+          this.getComments();
         } else {
-          Vue.prototype.$message.error(response.message)
+          this.$message.error(response.message);
         }
       })
       .catch(error => {
-        console.error("vote error:", error);
-      })
+        this.$message.error('voteComment error:' + error);
+      });
     },
     goCommunityDetail(id) {
       this.$router.push({ name: "Community", params: { id: id }});
+    },
+    getComments() {
+      const postId = this.$route.params.id;
+      if (!postId) {
+        return;
+      }
+
+      this.$axios({
+        method: "get",
+        url: `/comment/${postId}`,
+      })
+      .then(response => {
+        if (response.code == 1000) {
+          this.comments = response.data;
+        } else {
+          this.$message.error(response.message);
+          this.comments = [];
+        }
+      })
+      .catch(error => {
+        this.$message.error('getComments error:' + error);
+        this.comments = [];
+      });
+    },
+    cancelComment() {
+      if (this.commentContent.trim()) {
+        this.$confirm('确定要取消评论吗？已输入的内容将会丢失', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.commentContent = '';
+          this.$message({
+            type: 'info',
+            message: '已取消评论'
+          });
+        }).catch(() => {});
+      } else {
+        this.commentContent = '';
+      }
+    },
+    submitComment() {
+      if (!this.commentContent.trim()) {
+        this.$message.warning('评论内容不能为空');
+        return;
+      }
+
+      this.submitting = true;
+      this.$axios({
+        method: "post",
+        url: "/comment",
+        data: {
+          post_id: this.post.post_id,
+          content: this.commentContent
+        }
+      })
+      .then(response => {
+        if (response.code == 1000) {
+          this.commentContent = '';
+          this.getComments();
+        } else {
+          this.$message.error(response.message);
+        }
+      })
+      .catch(error => {
+        this.$message.error('submitComment error:' + error);
+      })
+      .finally(() => {
+        this.submitting = false;
+      });
     },
     formatTime(timestamp) {
       if (!timestamp) return '';
@@ -140,11 +259,13 @@ export default {
       const seconds = String(date.getUTCSeconds()).padStart(2, '0');
       
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    }
+    },
   },
   mounted: function() {
     this.getPostDetail();
-  }
+    this.getComments();
+    this.cancelComment();
+  },
 };
 </script>
 
@@ -170,6 +291,146 @@ export default {
     margin-right: 12px;
     padding-bottom: 30px;
     position: relative;
+
+    // 评论输入框样式
+    .comment-input {
+      width: calc(100% - 40px);
+      margin: 20px;
+      padding: 15px;
+      background: #fff;
+      border: 1px solid #edeff1;
+      border-radius: 4px;
+      box-sizing: border-box;
+
+      .el-textarea {
+        margin-bottom: 10px;
+        
+        /deep/ .el-textarea__inner {
+          resize: none;
+          border: 1px solid #edeff1;
+          font-size: 14px;
+          line-height: 21px;
+          padding: 12px;
+          min-height: 100px;
+          
+          &:focus {
+            border-color: #0079d3;
+            box-shadow: 0 0 0 1px #0079d3;
+          }
+
+          &::placeholder {
+            color: #878a8c;
+          }
+        }
+      }
+
+      .btn-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 10px;
+        
+        .btn-base {
+          width: 120px;
+          height: 32px;
+          margin: 0;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+        
+        .cancel-btn {
+          .btn-base();
+          background: #ffffff !important;
+          border: 1px solid #edeff1 !important;
+          color: #878a8c !important;
+        }
+        
+        .submit-btn {
+          .btn-base();
+          background: #66b1ff !important;
+          border: none !important;
+          color: #ffffff !important;
+        }
+      }
+    }
+
+    // 评论列表样式
+    .comment-list {
+      width: 100%;
+      margin: 20px 0;
+      padding: 0 20px;
+      box-sizing: border-box;
+
+      .no-comments {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 14px;
+        background: #fff;
+        border: 1px solid #edeff1;
+        border-radius: 4px;
+      }
+
+      .comment {
+        width: 100%;
+        margin: 10px 0;
+        padding: 15px;
+        background: #fff;
+        border: 1px solid #edeff1;
+        border-radius: 4px;
+        position: relative;
+        box-sizing: border-box;
+
+        .c-left {
+          .c-arrow {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            z-index: 2;
+            left: 12px;
+            background: #ffffff;
+            padding-bottom: 5px;
+          }
+        }
+
+        .c-right {
+          margin-left: 40px;
+          padding-right: 10px;
+
+          .c-user-info {
+            margin-bottom: 10px;
+            
+            .name {
+              color: #0079d3;
+              font-size: 12px;
+              font-weight: 500;
+              line-height: 16px;
+              &:hover {
+                text-decoration: underline;
+              }
+            }
+            
+            .num {
+              padding-left: 4px;
+              font-size: 12px;
+              font-weight: 400;
+              line-height: 16px;
+              color: #7c7c7c;
+            }
+          }
+
+          .c-content {
+            font-family: Noto Sans, Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 21px;
+            word-break: break-word;
+            color: #1a1a1b;
+          }
+        }
+      }
+    }
+
     .container {
       width: 100%;
       height: auto;
@@ -201,93 +462,55 @@ export default {
       .l-container {
         padding: 15px;
         margin-left: 40px;
+        border-bottom: 1px solid #edeff1;
+
         .con-title {
-          color: #000000;
-          font-size: 18px;
-          font-weight: 500;
-          line-height: 22px;
+          color: #1a1a1b;
+          font-size: 20px;
+          font-weight: 600;
+          line-height: 24px;
           text-decoration: none;
           word-break: break-word;
+          margin-bottom: 15px;
+          padding-bottom: 15px;
+          border-bottom: 1px solid #edeff1;
         }
-        .con-info{
-          margin: 25px 0;
-          padding: 15px 0;
-          border-bottom: 1px solid grey;
-        }
-        .con-cover {
-          height: 512px;
-          width: 100%;
-          background: url("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1585999647247&di=7e9061211c23e3ed9f0c4375bb3822dc&imgtype=0&src=http%3A%2F%2Fi1.hdslb.com%2Fbfs%2Farchive%2F04d8cda08e170f4a58c18c45a93c539375c22162.jpg")
-            no-repeat;
-          background-size: cover;
-          margin-top: 10px;
-          margin-bottom: 10px;
-        }
-        .user-btn {
-          font-size: 12px;
-          display: flex;
-          display: -webkit-flex;
-          .btn-item {
-            display: flex;
-            display: -webkit-flex;
-            align-items: center;
-            margin-right: 10px;
-            .iconfont{
-              margin-right: 4px;
-            }
-          }
-        }
-      }
-    }
-    .comment {
-      width: 100%;
-      height: auto;
-      position: relative;
-      .c-left {
-        .line {
-          border-right: 2px solid #edeff1;
-          // width: 20px;
-          height: 100%;
-          position: absolute;
-          left: 20px;
-        }
-        .c-arrow {
-          display: flex;
-          display: -webkit-flex;
-          position: absolute;
-          z-index: 2;
-          flex-direction: column;
-          left: 12px;
-          background: #ffffff;
-          padding-bottom: 5px;
-        }
-      }
-      .c-right {
-        margin-left: 40px;
-        padding-right: 10px;
-        .c-user-info {
-          margin-bottom: 10px;
-          .name {
-            color: #1c1c1c;
-            font-size: 12px;
-            font-weight: 400;
-            line-height: 16px;
-          }
-          .num {
-            padding-left: 4px;
-            font-size: 12px;
-            font-weight: 400;
-            line-height: 16px;
-            color: #7c7c7c;
-          }
-        }
-        .c-content {
+
+        .con-info {
           font-family: Noto Sans, Arial, sans-serif;
           font-size: 14px;
           font-weight: 400;
           line-height: 21px;
           word-break: break-word;
-          color: rgb(26, 26, 27);
+          color: #1a1a1b;
+          margin: 15px 0;
+          padding: 15px 0;
+          border-bottom: 1px solid #edeff1;
+          white-space: pre-wrap;
+        }
+
+        .user-btn {
+          margin-top: 15px;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          color: #878a8c;
+
+          .btn-item {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+            cursor: pointer;
+
+            &:hover {
+              color: #1a1a1b;
+            }
+
+            .iconfont {
+              margin-right: 6px;
+              font-size: 16px;
+            }
+          }
         }
       }
     }
