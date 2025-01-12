@@ -2,18 +2,34 @@
   <div class="content">
     <div class="left">
       <div class="container">
-        <div class="post">
-          <a class="vote">
-            <span class="iconfont icon-up" @click="votePost(post.post_id, 1)"></span>
-          </a>
-          <span class="text">{{ post.vote_num || 0 }}</span>
-          <a class="vote">
-            <span class="iconfont icon-down" @click="votePost(post.post_id, -1)"></span>
-          </a>
-        </div>
         <div class="l-container">
-          <h4 class="con-title">{{post.title}}</h4>
-          <div class="con-info">{{post.content}}</div>
+          <div class="post-header">
+            <user-info-bar
+              :author="post.author_name"
+              :time="formatTime(post.create_time)"
+              :avatar-src="post.avatar_src"
+            />
+            <h4 class="post-title">{{ post.title }}</h4>
+          </div>
+          <div class="post-body">
+            <div class="post-content">{{ post.content }}</div>
+          </div>
+          <div class="post-bottom">
+            <post-header-bar
+              :author="post.author_name"
+              :time="formatTime(post.create_time)"
+              :vote-num="post.vote_num"
+              :is-author="isAuthor"
+              @vote="votePost(post.post_id, $event)"
+            />
+            <el-button 
+              v-if="isAuthor" 
+              type="text" 
+              class="edit-btn"
+              @click="showEditDialog">
+              <i class="el-icon-edit"></i> 编辑
+            </el-button>
+          </div>
         </div>
       </div>
 
@@ -23,8 +39,7 @@
           :rows="2"
           placeholder="写下你的评论..."
           v-model="commentContent"
-        >
-        </el-input>
+        />
         <div class="btn-wrapper">
           <el-button class="cancel-btn" @click="cancelComment">取消评论</el-button>
           <el-button
@@ -49,24 +64,25 @@
           暂无评论，快来发表第一条评论吧！
         </div>
         <div v-else v-for="comment in comments" :key="comment.comment_id" class="comment">
-          <div class="c-left">
-            <div class="c-arrow">
-              <a class="vote">
-                <span class="iconfont icon-up" @click="voteComment(comment.comment_id, 1)"></span>
-              </a>
-              <span class="text">{{ comment.vote_num || 0 }}</span>
-              <a class="vote">
-                <span class="iconfont icon-down" @click="voteComment(comment.comment_id, -1)"></span>
-              </a>
-            </div>
-          </div>
           <div class="c-right">
-            <div class="c-user-info">
-              <span class="name">{{ comment.author_name || '匿名用户' }}</span>
-              <span class="num">{{ comment.vote_num || 0 }} 点赞</span>
-              <span class="num">· {{ formatTime(comment.create_time) }}</span>
-            </div>
+            <user-info-bar
+              :author="comment.author_name"
+              :time="formatTime(comment.create_time)"
+              :avatar-src="comment.avatar_src"
+            />
             <p class="c-content">{{ comment.content }}</p>
+            <div class="comment-actions">
+              <p class="c-reply">回复</p>
+              <post-header-bar
+                :author="comment.author_name"
+                :time="formatTime(comment.create_time)"
+                :vote-num="comment.vote_num"
+                @vote="voteComment(comment.comment_id, $event)"
+              />
+            </div>
+            <div class="c-reply-list">
+              <!-- <p class="c-reply">回复列表...</p> -->
+            </div>
           </div>
         </div>
       </div>
@@ -83,15 +99,46 @@
         <button class="topic-btn" @click="goCommunityDetail(post.community.community_id)">进入社区</button>
       </div>
     </div>
+
+    <!-- 编辑帖子对话框 -->
+    <el-dialog
+      title="编辑帖子"
+      :visible.sync="editDialogVisible"
+      width="50%">
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="标题">
+          <el-input v-model="editForm.title" maxlength="100"></el-input>
+        </el-form-item>
+        <el-form-item label="内容">
+          <el-input
+            type="textarea"
+            :rows="6"
+            v-model="editForm.content">
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitEdit">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
+import UserInfoBar from '@/components/UserInfoBar.vue';
+import PostHeaderBar from '@/components/PostHeaderBar.vue';
+
 export default {
-  name: "Content",
-  data(){
+  name: 'Content',
+  components: {
+    UserInfoBar,
+    PostHeaderBar
+  },
+  data() {
     return {
       post: {
+        author_id: '',
         author_name: '',
         vote_num: 0,
         post_id: '',
@@ -105,12 +152,21 @@ export default {
           create_time: ''
         }
       },
-      comments: [],
       commentContent: '',
+      comments: [],
       submitting: false,
-    }
+      editDialogVisible: false,
+      editForm: {
+        title: '',
+        content: ''
+      },
+      isAuthor: false
+    };
   },
-  methods:{
+  methods: {
+    goCommunityDetail(id) {
+      this.$router.push({ name: "Community", params: { id: id }});
+    },
     getPostDetail() {
       const postId = this.$route.params.id;
       if (!postId) {
@@ -119,19 +175,20 @@ export default {
       }
 
       this.$axios({
-            method: "get",
-            url: "/post/" + postId,
+        method: "get",
+        url: "/post/" + postId,
       })
       .then(response => {
         if (response.code == 1000) {
           this.post = response.data;
+          this.checkIsAuthor();
         } else {
           this.$message.error(response.message);
           this.$router.push({ name: "Home" });
         }
       })
       .catch(error => {
-        this.$message.error('getPostDetail ：' + error);
+        this.$message.error('getPostDetail error：' + error);
         this.$router.push({ name: "Home" });
       }); 
     },
@@ -148,8 +205,8 @@ export default {
           this.$message.error(response.message);
         }
       })
-      .catch(() => {
-        this.$message.error('votePost error');
+      .catch((error) => {
+        this.$message.error('votePost error: ' + error);
       });
     },
     voteComment(comment_id, direction) {
@@ -172,9 +229,6 @@ export default {
       .catch(error => {
         this.$message.error('voteComment error:' + error);
       });
-    },
-    goCommunityDetail(id) {
-      this.$router.push({ name: "Community", params: { id: id }});
     },
     getComments() {
       const postId = this.$route.params.id;
@@ -260,11 +314,56 @@ export default {
       
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
+    showEditDialog() {
+      this.editForm.title = this.post.title;
+      this.editForm.content = this.post.content;
+      this.editDialogVisible = true;
+    },
+    submitEdit() {
+      if (!this.editForm.title.trim() || !this.editForm.content.trim()) {
+        this.$message.error('标题和内容不能为空');
+        return;
+      }
+
+      this.$axios({
+        method: 'put',
+        url: "/post",
+        data: {
+          post_id: this.post.post_id,
+          title: this.editForm.title,
+          content: this.editForm.content
+        }
+      })
+      .then(response => {
+        if (response.code === 1000) {
+          this.$message.success('修改成功');
+          this.editDialogVisible = false;
+          this.getPostDetail();
+        } else {
+          this.$message.error(response.message);
+        }
+      })
+      .catch(() => {
+        this.$message.error('修改失败');
+      });
+    },
+    checkIsAuthor() {
+      let loginResult = JSON.parse(localStorage.getItem("loginResult"));
+      const userId = loginResult?.user_id;
+      this.isAuthor = userId && parseInt(userId) === this.post.author_id;
+    }
   },
-  mounted: function() {
+  watch: {
+    post: {
+      handler() {
+        this.checkIsAuthor();
+      },
+      immediate: true
+    }
+  },
+  mounted() {
     this.getPostDetail();
     this.getComments();
-    this.cancelComment();
   },
 };
 </script>
@@ -378,46 +477,11 @@ export default {
         background: #fff;
         border: 1px solid #edeff1;
         border-radius: 4px;
-        position: relative;
         box-sizing: border-box;
 
-        .c-left {
-          .c-arrow {
-            display: flex;
-            flex-direction: column;
-            position: absolute;
-            z-index: 2;
-            left: 12px;
-            background: #ffffff;
-            padding-bottom: 5px;
-          }
-        }
-
         .c-right {
-          margin-left: 40px;
-          padding-right: 10px;
-
-          .c-user-info {
-            margin-bottom: 10px;
-            
-            .name {
-              color: #0079d3;
-              font-size: 12px;
-              font-weight: 500;
-              line-height: 16px;
-              &:hover {
-                text-decoration: underline;
-              }
-            }
-            
-            .num {
-              padding-left: 4px;
-              font-size: 12px;
-              font-weight: 400;
-              line-height: 16px;
-              color: #7c7c7c;
-            }
-          }
+          margin-left: 0;
+          padding-right: 0;
 
           .c-content {
             font-family: Noto Sans, Arial, sans-serif;
@@ -426,6 +490,35 @@ export default {
             line-height: 21px;
             word-break: break-word;
             color: #1a1a1b;
+            padding: 8px 0;
+            margin: 0 0 12px 0;
+            width: 100%;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+          }
+
+          .comment-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0;
+
+            .c-reply {
+              font-size: 12px;
+              font-weight: 700;
+              line-height: 16px;
+              color: #878A8C;
+              cursor: pointer;
+              margin: 0;
+              
+              &:hover {
+                color: #1a1a1b;
+              }
+            }
+
+            .post-header-bar {
+              margin: 0;
+            }
           }
         }
       }
@@ -460,41 +553,80 @@ export default {
         }
       }
       .l-container {
-        padding: 15px;
-        margin-left: 40px;
-        border-bottom: 1px solid #edeff1;
-
-        .con-title {
-          color: #1a1a1b;
-          font-size: 20px;
-          font-weight: 600;
-          line-height: 24px;
-          text-decoration: none;
-          word-break: break-word;
-          margin-bottom: 15px;
-          padding-bottom: 15px;
+        background: #fff;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        margin-bottom: 16px;
+        
+        .post-header {
+          padding: 2px 16px;
           border-bottom: 1px solid #edeff1;
+
+          .edit-btn {
+            font-size: 12px;
+            color: #878A8C;
+            margin-left: 16px;
+            padding: 4px 8px;
+            
+            &:hover {
+              color: #0079d3;
+            }
+          }
+
+          .post-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0;
+            padding: 0 0;
+          }
+
+          .post-title {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 32px;
+            color: #1a1a1b;
+            margin: 0;
+            padding: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            letter-spacing: 0.5px;
+          }
         }
 
-        .con-info {
-          font-family: Noto Sans, Arial, sans-serif;
-          font-size: 14px;
-          font-weight: 400;
-          line-height: 21px;
-          word-break: break-word;
-          color: #1a1a1b;
-          margin: 15px 0;
-          padding: 15px 0;
-          border-bottom: 1px solid #edeff1;
-          white-space: pre-wrap;
+        .post-body {
+          padding: 10px 12px;
+          min-height: 100px;
+          
+          .post-content {
+            font-family: Noto Sans, Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 1.6;
+            color: #1a1a1b;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            padding: 0;
+            margin: 0;
+          }
+        }
+
+        .post-bottom {
+          display: flex; /* 使用 flexbox 布局 */
+          justify-content: space-between; /* 在两端对齐 */
+          align-items: center; /* 垂直居中对齐 */
+          padding: 10px; /* 添加内边距 */
+          border: none; /* 去掉边框 */
         }
 
         .user-btn {
-          margin-top: 15px;
+          margin-top: 12px;
           font-size: 12px;
           display: flex;
           align-items: center;
           color: #878a8c;
+          padding: 4px 0;
 
           .btn-item {
             display: flex;

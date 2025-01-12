@@ -10,40 +10,26 @@
           <i class="iconfont icon-top"></i>Score
         </div>
         <div class="search">
-            <i class="search-icon el-icon-search" @click="searchPost"></i>
-            <input type="text" class="s-input" v-model="keyword" @keydown.enter="searchPost"/>
-          </div>
+          <i class="search-icon el-icon-search" @click="searchPost"></i>
+          <input type="text" class="s-input" v-model="keyword" @keydown.enter="searchPost"/>
+        </div>
         <button class="btn-publish" @click="goPublish">发表</button>
       </div>
       <ul class="c-l-list">
-          <li class="c-l-item" v-for="post in postList" :key="post.post_id">
-            <div class="post">
-              <a class="vote">
-                <span class="iconfont icon-up" @click="vote(post.post_id, 1)"></span>
-              </a>
-              <span class="text">{{ post.vote_num }}</span>
-              <a class="vote">
-                <span class="iconfont icon-down" @click="vote(post.post_id, -1)"></span>
-              </a>
-            </div>
-            <div class="l-container" @click="goDetail(post.post_id)">
-              <h4 class="con-title">{{ post.title }}</h4>
-              <div class="con-memo">
-                <p>{{ post.content }}</p>
-              </div>
-              <!-- <div class="user-btn">
-              <span class="btn-item">
-                <i class="iconfont icon-comment"></i>
-                <span>{{post.comments}} comments</span>
-              </span>
-            </div> -->
-            </div>
-          </li>
+        <li class="c-l-item" v-for="post in postList" :key="post.post_id">
+          <post-list
+            :post="post"
+            :time="formatTime(post.create_time)"
+            :is-author="post.author_id === userId"
+            @vote="handleVote"
+            @detail="goDetail"
+          />
+        </li>
         <div class="pagination-block">
-            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="pageNumber"
-              :page-sizes="[5, 10, 20, 30]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
-              :total="pageTotal?.total || 0">
-            </el-pagination>
+          <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="pageNumber"
+            :page-sizes="[5, 10, 20, 30]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
+            :total="pageTotal?.total || 0">
+          </el-pagination>
         </div>
       </ul>
     </div>
@@ -65,11 +51,13 @@
 </template>
 
 <script>
-// @ is an alias to /src
-import Vue from 'vue';
+import PostList from '@/components/PostList.vue';
+
 export default {
   name: "Home",
-  components: {},
+  components: {
+    PostList,
+  },
   data() {
     return {
       order: "time",
@@ -83,6 +71,7 @@ export default {
       isSearch: false,
       communityList: [],
       maxCommunities: 5,
+      userId: ''
     };
   },
   methods: {
@@ -162,25 +151,22 @@ export default {
         this.communityList = [];
       });
     },
-    vote(post_id, direction){
-      this.$axios({
-        method: "post",
-        url: "/vote",
-        data: JSON.stringify({
-          post_id: post_id,
-          direction: direction,
-        })
+    votePost(post_id, direction) {
+      this.$axios.post("/vote", {
+        target_id: post_id,
+        target_type: 1,
+        direction: direction
       })
       .then(response => {
-        if (response.code == 1000) {
+        if (response.code === 1000) {
           this.getPostList();
         } else {
-          Vue.prototype.$message.error(response.message)
+          this.$message.error(response.message);
         }
       })
-      .catch(error => {
-        console.error("vote error:", error);
-      })
+      .catch((error) => {
+        this.$message.error('votePost error: ' + error);
+      });
     },
     async searchPost() {
       if (!this.keyword) {
@@ -211,6 +197,20 @@ export default {
     },
     goCommunityList() {
       this.$router.push({ name: 'CommunityList' });
+    },
+    formatTime(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    handleVote({ postId, type }) {
+      this.votePost(postId, type)
     }
   },
   mounted() {
@@ -366,85 +366,142 @@ export default {
     .c-l-list {
       background-color: #ffffff;
       border-radius: 4px;
+
       .c-l-item {
         display: flex;
-        padding: 8px 0;
+        padding: 12px;
         position: relative;
         background-color: #ffffff;
         border: 1px solid #ccc;
         border-radius: 4px;
-        margin-bottom: 10px;
+        margin-bottom: 16px;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          border-color: #0079d3;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
         .post {
+          width: 100%;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          width: 40px;
-          padding: 8px 4px;
-          background-color: #f8f9fa;
-          border-left: 4px solid transparent;
-          border-radius: 4px 0 0 4px;
-          .vote {
+          
+          .l-container {
+            padding: 12px 0;
             cursor: pointer;
-            color: #878A8C;
-            padding: 4px;
-            &:hover {
-              background-color: #e8e8e8;
-              border-radius: 2px;
+            flex: 1;
+            
+            .user-info-bar {
+              margin-bottom: 12px;
+              padding-left: 16px;
             }
-            .iconfont {
-              font-size: 16px;
+
+            .post-title {
+              font-size: 18px;
+              font-weight: 500;
+              color: #1a1a1b;
+              margin: 0 0 12px 16px;
+              line-height: 1.4;
+              padding-right: 16px;
+              
+              &:hover {
+                color: #0079d3;
+              }
             }
-          }
-          .text {
-            color: #1a1a1b;
-            font-size: 12px;
-            font-weight: 700;
-            line-height: 16px;
-            pointer-events: none;
-            margin: 4px 0;
-          }
-        }
-        .l-container {
-          flex: 1;
-          padding: 8px 16px;
-          cursor: pointer;
-          .con-title {
-            color: #1a1a1b;
-            font-size: 18px;
-            font-weight: 500;
-            line-height: 22px;
-            margin-bottom: 8px;
-            &:hover {
-              color: #0079d3;
-            }
-          }
-          .con-memo {
-            p {
-              color: #4c4c4c;
-              font-size: 14px;
-              line-height: 21px;
-              word-break: break-word;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              display: -webkit-box;
-              -webkit-line-clamp: 3;
-              -webkit-box-orient: vertical;
+
+            .post-content {
+              margin-bottom: 16px;
+              padding: 0 16px;
+              
+              p {
+                font-size: 14px;
+                line-height: 1.4;
+                color: #4a4a4a;
+                margin: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                max-height: 40px;
+                word-break: break-word;
+              }
             }
           }
-        }
-        &:hover {
-          border-color: #898989;
+
+          .post-header-bar {
+            padding: 8px 0;
+            margin-top: 0;
+            border-top: 1px solid #edeff1;
+            display: flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            border-radius: 0 0 4px 4px;
+            min-height: 32px;
+            
+            .vote-actions {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              margin-left: 0;
+              padding-left: 16px;
+              
+              .vote {
+                padding: 4px;
+                cursor: pointer;
+                color: #878A8C;
+                
+                &:hover {
+                  color: #0079d3;
+                }
+              }
+              
+              .vote-num {
+                font-size: 12px;
+                font-weight: 600;
+                margin: 0 4px;
+                color: #1a1a1b;
+              }
+            }
+          }
         }
       }
     }
     .pagination-block {
-      background-color: #ffffff;
+      background: #ffffff;
       padding: 16px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
       display: flex;
       justify-content: center;
-      margin-top: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      
+      .el-pagination {
+        font-weight: normal;
+        
+        .btn-prev,
+        .btn-next {
+          background-color: #f8f9fa;
+          
+          &:hover {
+            color: #0079d3;
+          }
+        }
+        
+        .el-pager li {
+          background-color: #f8f9fa;
+          
+          &.active {
+            background-color: #0079d3;
+            color: #ffffff;
+          }
+          
+          &:hover:not(.active) {
+            color: #0079d3;
+          }
+        }
+      }
     }
   }
   .right {
