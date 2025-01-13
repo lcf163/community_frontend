@@ -11,7 +11,7 @@
         <p>{{ post.content }}</p>
       </div>
     </div>
-    <post-header-bar
+    <vote-info-bar
       :author="post.author_name"
       :time="time"
       :vote-num="post.vote_num"
@@ -24,13 +24,13 @@
 
 <script>
 import UserInfoBar from './UserInfoBar.vue'
-import PostHeaderBar from './PostHeaderBar.vue'
+import VoteInfoBar from './VoteInfoBar.vue'
 
 export default {
   name: 'PostList',
   components: {
     UserInfoBar,
-    PostHeaderBar
+    VoteInfoBar
   },
   props: {
     post: {

@@ -15,7 +15,7 @@
             <div class="post-content">{{ post.content }}</div>
           </div>
           <div class="post-bottom">
-            <post-header-bar
+            <vote-info-bar
               :author="post.author_name"
               :time="formatTime(post.create_time)"
               :vote-num="post.vote_num"
@@ -73,7 +73,7 @@
             <p class="c-content">{{ comment.content }}</p>
             <div class="comment-actions">
               <p class="c-reply">回复</p>
-              <post-header-bar
+              <vote-info-bar
                 :author="comment.author_name"
                 :time="formatTime(comment.create_time)"
                 :vote-num="comment.vote_num"
@@ -127,13 +127,13 @@
 
 <script>
 import UserInfoBar from '@/components/UserInfoBar.vue';
-import PostHeaderBar from '@/components/PostHeaderBar.vue';
+import VoteInfoBar from '@/components/VoteInfoBar.vue';
 
 export default {
   name: 'Content',
   components: {
     UserInfoBar,
-    PostHeaderBar
+    VoteInfoBar
   },
   data() {
     return {
