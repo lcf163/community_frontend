@@ -134,8 +134,7 @@ export default {
       editDialogVisible: false,
       editForm: {
         title: '',
-        content: '',
-        post_id: ''
+        content: ''
       },
       isAuthor: false,
       showCommentInput: true,
