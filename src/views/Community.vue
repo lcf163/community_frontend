@@ -37,6 +37,7 @@
 <script>
 import Vue from 'vue';
 import PostList from '@/components/PostList.vue';
+import { formatTime } from '@/utils/timeFormat';
 
 export default {
 	name: "Community",
@@ -138,26 +139,7 @@ export default {
 				} 
 			});
 		},
-		formatTime(timestamp) {
-			if (!timestamp) return '';
-			
-			// 直接使用原始时间字符串创建 Date 对象
-			const date = new Date(timestamp);
-			// 检查是否是有效日期
-			if (isNaN(date.getTime())) {
-				return '';
-			}
-			
-			// 格式化日期
-			const year = date.getFullYear();
-			const month = String(date.getMonth() + 1).padStart(2, '0');
-			const day = String(date.getDate()).padStart(2, '0');
-			const hours = String(date.getHours()).padStart(2, '0');
-			const minutes = String(date.getMinutes()).padStart(2, '0');
-			const seconds = String(date.getSeconds()).padStart(2, '0');
-			
-			return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-		},
+		formatTime,
 		handleVote({ postId, type }) {
 			this.vote(postId, type);
 		}

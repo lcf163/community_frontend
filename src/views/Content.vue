@@ -33,26 +33,13 @@
         </div>
       </div>
 
-      <div class="comment-input">
-        <el-input
-          type="textarea"
-          :rows="2"
-          placeholder="写下你的评论..."
-          v-model="commentContent"
-        />
-        <div class="btn-wrapper">
-          <el-button class="cancel-btn" @click="cancelComment">取消评论</el-button>
-          <el-button
-            class="submit-btn"
-            type="primary"
-            @click="submitComment"
-            :loading="submitting"
-            :disabled="!commentContent.trim()"
-          >
-            {{ submitting ? '发表中...' : '发表评论' }}
-          </el-button>
-        </div>
-      </div>
+      <comment-dialog
+        type="comment"
+        :visible.sync="showCommentInput"
+        :submitting="submitting"
+        @submit="submitComment"
+        @cancel="cancelComment"
+      />
 
       <div class="comment-list">
         <div class="user-btn">
@@ -100,40 +87,27 @@
       </div>
     </div>
 
-    <!-- 编辑帖子对话框 -->
-    <el-dialog
-      title="编辑帖子"
+    <comment-dialog
+      type="edit"
       :visible.sync="editDialogVisible"
-      width="50%">
-      <el-form :model="editForm" label-width="80px">
-        <el-form-item label="标题">
-          <el-input v-model="editForm.title" maxlength="100"></el-input>
-        </el-form-item>
-        <el-form-item label="内容">
-          <el-input
-            type="textarea"
-            :rows="6"
-            v-model="editForm.content">
-          </el-input>
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="editDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="submitEdit">确 定</el-button>
-      </span>
-    </el-dialog>
+      :initial-data="editForm"
+      @submit="submitEdit"
+    />
   </div>
 </template>
 
 <script>
 import UserInfoBar from '@/components/UserInfoBar.vue';
 import VoteInfoBar from '@/components/VoteInfoBar.vue';
+import CommentDialog from '@/components/CommentDialog.vue';
+import { formatTime } from '@/utils/timeFormat';
 
 export default {
   name: 'Content',
   components: {
     UserInfoBar,
-    VoteInfoBar
+    VoteInfoBar,
+    CommentDialog
   },
   data() {
     return {
@@ -145,6 +119,7 @@ export default {
         title: '',
         content: '',
         create_time: '',
+        avatar_src: '',
         community: {
           community_id: '',
           community_name: '',
@@ -152,7 +127,6 @@ export default {
           create_time: ''
         }
       },
-      commentContent: '',
       comments: [],
       submitting: false,
       editDialogVisible: false,
@@ -160,7 +134,8 @@ export default {
         title: '',
         content: ''
       },
-      isAuthor: false
+      isAuthor: false,
+      showCommentInput: true
     };
   },
   methods: {
@@ -254,98 +229,65 @@ export default {
       });
     },
     cancelComment() {
-      if (this.commentContent.trim()) {
-        this.$confirm('确定要取消评论吗？已输入的内容将会丢失', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.commentContent = '';
-          this.$message({
-            type: 'info',
-            message: '已取消评论'
-          });
-        }).catch(() => {});
-      } else {
-        this.commentContent = '';
-      }
+      this.showCommentInput = true
     },
-    submitComment() {
-      if (!this.commentContent.trim()) {
-        this.$message.warning('评论内容不能为空');
-        return;
-      }
-
-      this.submitting = true;
+    submitComment(formData) {
+      if (!formData.content.trim()) return
+      this.submitting = true
       this.$axios({
-        method: "post",
-        url: "/comment",
+        method: 'post',
+        url: '/comment',
         data: {
           post_id: this.post.post_id,
-          content: this.commentContent
+          content: formData.content
         }
       })
-      .then(response => {
-        if (response.code == 1000) {
-          this.commentContent = '';
-          this.getComments();
-        } else {
-          this.$message.error(response.message);
-        }
-      })
-      .catch(error => {
-        this.$message.error('submitComment error:' + error);
-      })
-      .finally(() => {
-        this.submitting = false;
-      });
+        .then(response => {
+          if (response.code === 1000) {
+            this.$message.success('评论成功')
+            this.getComments()
+            this.showCommentInput = true
+          } else {
+            this.$message.error(response.message)
+          }
+        })
+        .catch(() => {
+          this.$message.error('评论失败')
+        })
+        .finally(() => {
+          this.submitting = false
+        })
     },
-    formatTime(timestamp) {
-      if (!timestamp) return '';
-      
-      // 直接解析 UTC 时间字符串，不进行时区转换
-      const date = new Date(timestamp);
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(date.getUTCDate()).padStart(2, '0');
-      const hours = String(date.getUTCHours()).padStart(2, '0');
-      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-      const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-      
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    },
+    formatTime,
     showEditDialog() {
-      this.editForm.title = this.post.title;
-      this.editForm.content = this.post.content;
-      this.editDialogVisible = true;
-    },
-    submitEdit() {
-      if (!this.editForm.title.trim() || !this.editForm.content.trim()) {
-        this.$message.error('标题和内容不能为空');
-        return;
+      this.editForm = {
+        title: this.post.title,
+        content: this.post.content
       }
-
+      this.editDialogVisible = true
+    },
+    submitEdit(formData) {
       this.$axios({
         method: 'put',
         url: "/post",
         data: {
           post_id: this.post.post_id,
-          title: this.editForm.title,
-          content: this.editForm.content
+          title: formData.title,
+          content: formData.content
         }
       })
       .then(response => {
         if (response.code === 1000) {
-          this.$message.success('修改成功');
-          this.editDialogVisible = false;
-          this.getPostDetail();
+          this.$message.success('修改成功')
+          this.editDialogVisible = false
+          this.getPostDetail()
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message)
         }
       })
       .catch(() => {
-        this.$message.error('修改失败');
-      });
+        this.$message.error('修改失败')
+      })
     },
     checkIsAuthor() {
       let loginResult = JSON.parse(localStorage.getItem("loginResult"));
