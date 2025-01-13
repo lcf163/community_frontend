@@ -25,12 +25,13 @@
             @detail="goDetail"
           />
         </li>
-        <div class="pagination-block">
-          <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="pageNumber"
-            :page-sizes="[5, 10, 20, 30]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
-            :total="pageTotal?.total || 0">
-          </el-pagination>
-        </div>
+        <page-bar
+          :current-page="pageNumber"
+          :page-size="pageSize"
+          :total="pageTotal?.total || 0"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </ul>
     </div>
     <div class="right">
@@ -53,11 +54,13 @@
 <script>
 import PostList from '@/components/PostList.vue';
 import { formatTime } from '@/utils/timeFormat';
+import PageBar from '@/components/PageBar.vue'
 
 export default {
   name: "Home",
   components: {
     PostList,
+    PageBar
   },
   data() {
     return {

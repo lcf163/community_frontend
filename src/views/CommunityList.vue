@@ -19,24 +19,25 @@
           </div>
         </li>
       </ul>
-      <div class="pagination-block">
-        <el-pagination 
-          @size-change="handleSizeChange" 
-          @current-change="handleCurrentChange"
-          :current-page="pageNumber"
-          :page-sizes="[3, 6, 9, 12]"
-          :page-size="pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="pageTotal.total || 0">
-        </el-pagination>
-      </div>
+      <page-bar
+        :current-page="pageNumber"
+        :page-size="pageSize"
+        :total="pageTotal.total || 0"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
     </div>
   </div>
 </template>
 
 <script>
+import PageBar from '@/components/PageBar.vue'
+
 export default {
   name: 'CommunityList',
+  components: {
+    PageBar
+  },
   data() {
     return {
       communityList: [],

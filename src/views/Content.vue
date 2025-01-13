@@ -50,6 +50,13 @@
         @submit-reply="submitReply"
         @vote-comment="voteComment"
       />
+      <page-bar
+        :current-page="pageNumber"
+        :page-size="pageSize"
+        :total="pageTotal?.total || 0"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
     </div>
     <div class="right">
       <div class="topic-info">
@@ -78,6 +85,7 @@ import UserInfoBar from '@/components/UserInfoBar.vue';
 import VoteInfoBar from '@/components/VoteInfoBar.vue';
 import CommentDialog from '@/components/CommentDialog.vue';
 import CommentReply from '@/components/CommentReply.vue';
+import PageBar from '@/components/PageBar.vue'
 import { formatTime } from '@/utils/timeFormat';
 
 export default {
@@ -86,7 +94,8 @@ export default {
     UserInfoBar,
     VoteInfoBar,
     CommentDialog,
-    CommentReply
+    CommentReply,
+    PageBar
   },
   data() {
     return {
@@ -118,6 +127,11 @@ export default {
       showCommentInput: true,
       loading: false,
       activeComment: null, // 当前激活的评论
+      pageNumber: 1,
+      pageSize: 10,
+      pageTotal: {
+        total: 0
+      }
     };
   },
   methods: {
