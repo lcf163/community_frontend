@@ -60,7 +60,12 @@
             />
             <p class="c-content">{{ comment.content }}</p>
             <div class="comment-actions">
-              <p class="c-reply">回复</p>
+              <el-button 
+                type="text" 
+                class="reply-btn"
+                @click="showReplyInput(comment)">
+                回复
+              </el-button>
               <vote-info-bar
                 :author="comment.author_name"
                 :time="formatTime(comment.create_time)"
@@ -68,8 +73,61 @@
                 @vote="voteComment(comment.comment_id, $event)"
               />
             </div>
-            <div class="c-reply-list">
-              <!-- <p class="c-reply">回复列表...</p> -->
+
+            <!-- 回复列表移到这里，直接跟在评论操作后面 -->
+            <div v-if="comment.replies && comment.replies.length > 0" class="reply-list">
+              <div v-for="reply in comment.replies" :key="reply.comment_id" class="reply-item">
+                <user-info-bar
+                  :author="reply.author_name"
+                  :time="formatTime(reply.create_time)"
+                  :avatar-src="reply.avatar_src"
+                />
+                <p class="reply-content">
+                  <span class="reply-to">{{ reply.reply_to_user }}</span>
+                  {{ reply.content }}
+                </p>
+                <div class="reply-actions">
+                  <div class="action-left">
+                    <el-button 
+                      type="text" 
+                      class="reply-btn"
+                      @click="showReplyInput(reply, comment)">
+                      回复
+                    </el-button>
+                  </div>
+                  <div class="action-right">
+                    <vote-info-bar
+                      :author="reply.author_name"
+                      :time="formatTime(reply.create_time)"
+                      :vote-num="reply.vote_num"
+                      @vote="voteComment(reply.comment_id, $event)"
+                    />
+                  </div>
+                </div>
+                <!-- 二级回复的回复框 -->
+                <div v-if="reply.showReplyInput" class="reply-input nested">
+                  <comment-dialog
+                    type="comment"
+                    :visible.sync="reply.showReplyInput"
+                    :submitting="submitting"
+                    :placeholder="`回复 @${reply.author_name}：`"
+                    @submit="submitReply($event, reply)"
+                    @cancel="cancelReply(reply)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 一级评论的回复框 -->
+            <div v-if="comment.showReplyInput" class="reply-input">
+              <comment-dialog
+                type="comment"
+                :visible.sync="comment.showReplyInput"
+                :submitting="submitting"
+                :placeholder="`回复 @${comment.author_name}：`"
+                @submit="submitReply($event, comment)"
+                @cancel="cancelReply(comment)"
+              />
             </div>
           </div>
         </div>
@@ -138,7 +196,8 @@ export default {
       },
       isAuthor: false,
       showCommentInput: true,
-      loading: false
+      loading: false,
+      activeComment: null, // 当前激活的评论
     };
   },
   methods: {
@@ -210,9 +269,7 @@ export default {
     },
     getComments() {
       const postId = this.$route.params.id;
-      if (!postId) {
-        return;
-      }
+      if (!postId) return;
 
       this.$axios({
         method: "get",
@@ -220,7 +277,23 @@ export default {
       })
       .then(response => {
         if (response.code == 1000) {
-          this.comments = response.data;
+          // 为每个评论添加响应式属性
+          const comments = response.data.map(comment => {
+            this.$set(comment, 'showReplyInput', false);
+            // 确保 replies 是数组
+            if (!Array.isArray(comment.replies)) {
+              this.$set(comment, 'replies', []);
+            }
+            // 为每个回复添加响应式属性
+            comment.replies = comment.replies.map(reply => {
+              this.$set(reply, 'showReplyInput', false);
+              return reply;
+            });
+            // 获取评论的回复列表
+            this.getCommentReplies(comment);
+            return comment;
+          });
+          this.comments = comments;
         } else {
           this.$message.error(response.message);
           this.comments = [];
@@ -229,6 +302,28 @@ export default {
       .catch(error => {
         this.$message.error('getComments error:' + error);
         this.comments = [];
+      });
+    },
+    getCommentReplies(comment) {
+      if (!comment || !comment.comment_id) return;
+
+      this.$axios({
+        method: 'get',
+        url: `/comment/reply/${comment.comment_id}`,
+      }).then(response => {
+        if (response.code === 1000) {
+          // 为每个回复添加响应式属性
+          const replies = response.data.map(reply => {
+            this.$set(reply, 'showReplyInput', false);
+            return reply;
+          });
+          // 使用 Vue.set 确保响应式更新
+          this.$set(comment, 'replies', replies);
+        } else {
+          console.error('获取回复列表失败:', response.message);
+        }
+      }).catch(error => {
+        console.error('获取回复列表错误:', error);
       });
     },
     cancelComment() {
@@ -296,7 +391,75 @@ export default {
       let loginResult = JSON.parse(localStorage.getItem("loginResult"));
       const userId = loginResult?.user_id;
       this.isAuthor = userId && parseInt(userId) === this.post.author_id;
-    }
+    },
+    // 显示回复输入框
+    showReplyInput(comment, parentComment = null) {
+      // 先重置所有评论的回复框状态
+      this.comments.forEach(c => {
+        this.$set(c, 'showReplyInput', false);
+        if (c.replies) {
+          c.replies.forEach(r => {
+            this.$set(r, 'showReplyInput', false);
+          });
+        }
+      });
+
+      // 显示当前评论的回复框
+      this.$set(comment, 'showReplyInput', true);
+      if (parentComment) {
+        this.$set(comment, 'parentComment', parentComment);
+      }
+      this.activeComment = comment;
+    },
+
+    // 取消回复
+    cancelReply(comment) {
+      this.$set(comment, 'showReplyInput', false);
+      if (comment.parentComment) {
+        this.$delete(comment, 'parentComment');
+      }
+      this.activeComment = null;
+    },
+
+    // 提交回复
+    submitReply(formData, comment) {
+      if (!formData.content.trim()) return;
+      
+      // 判断是否是二级回复
+      const parentComment = comment.parentComment || comment;
+      const replyData = {
+        post_id: this.post.post_id,
+        parent_id: parentComment.comment_id,  // 添加 parent_id
+        content: formData.content,
+        reply_to_user: comment.author_name
+      };
+
+      this.submitting = true;
+      this.$axios({
+        method: 'post',
+        url: '/comment/reply',  // 修改为统一的回复接口
+        data: replyData
+      }).then(response => {
+        if (response.code === 1000) {
+          this.$message.success('回复成功');
+          // 刷新评论列表，确保数据同步
+          this.getComments();
+          // 关闭回复框
+          this.$set(comment, 'showReplyInput', false);
+          if (comment.parentComment) {
+            this.$delete(comment, 'parentComment');
+          }
+          this.activeComment = null;
+        } else {
+          this.$message.error(response.message || '回复失败');
+        }
+      }).catch(error => {
+        console.error('Reply error:', error);
+        this.$message.error('回复失败，请稍后重试');
+      }).finally(() => {
+        this.submitting = false;
+      });
+    },
   },
   watch: {
     post: {
@@ -465,6 +628,75 @@ export default {
               margin: 0;
             }
           }
+        }
+      }
+
+      .reply-list {
+        margin-left: 20px;
+        padding: 8px 0;
+        border-left: 2px solid #f0f0f0;
+
+        .reply-item {
+          padding: 8px 16px;
+          
+          .reply-content {
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 8px 0;
+            word-break: break-word;
+
+            .reply-to {
+              color: #0079d3;
+              font-weight: 500;
+              margin-right: 4px;
+            }
+          }
+
+          .reply-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 4px 0;
+
+            .action-left {
+              .reply-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+                color: #878a8c;
+                
+                &:hover {
+                  color: #0079d3;
+                }
+              }
+            }
+
+            .action-right {
+              display: flex;
+              align-items: center;
+            }
+          }
+        }
+      }
+
+      .reply-input {
+        margin: 8px 0;
+        padding: 8px;
+        background-color: #f6f7f8;
+        border-radius: 4px;
+
+        &.nested {
+          margin-left: 24px;
+        }
+      }
+
+      .reply-btn {
+        font-size: 12px;
+        color: #878a8c;
+        padding: 0;
+        margin-right: 16px;
+
+        &:hover {
+          color: #0079d3;
         }
       }
     }
@@ -678,6 +910,34 @@ export default {
           background: #005fa3;
         }
       }
+    }
+  }
+}
+
+.comment {
+  .c-right {
+    flex: 1;
+    padding: 8px 16px;
+    
+    .c-content {
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 8px 0;
+      word-break: break-word;
+    }
+
+    .comment-actions {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+    }
+
+    // 修改回复输入框样式
+    .reply-input {
+      margin: 8px 0;
+      padding: 8px;
+      background-color: #f6f7f8;
+      border-radius: 4px;
     }
   }
 }
