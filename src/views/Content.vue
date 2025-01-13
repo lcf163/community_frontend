@@ -41,97 +41,15 @@
         @cancel="cancelComment"
       />
 
-      <div class="comment-list">
-        <div class="user-btn">
-          <span class="btn-item">
-            <i class="iconfont icon-comment"></i> 评论
-            <span class="comment-num">{{ post.comment_count || 0 }}</span>
-          </span>
-        </div>
-        <div v-if="comments.length === 0" class="no-comments">
-          暂无评论，快来发表第一条评论吧！
-        </div>
-        <div v-else v-for="comment in comments" :key="comment.comment_id" class="comment">
-          <div class="c-right">
-            <user-info-bar
-              :author="comment.author_name"
-              :time="formatTime(comment.create_time)"
-              :avatar-src="comment.avatar_src"
-            />
-            <p class="c-content">{{ comment.content }}</p>
-            <div class="comment-actions">
-              <el-button 
-                type="text" 
-                class="reply-btn"
-                @click="showReplyInput(comment)">
-                回复
-              </el-button>
-              <vote-info-bar
-                :author="comment.author_name"
-                :time="formatTime(comment.create_time)"
-                :vote-num="comment.vote_num"
-                @vote="voteComment(comment.comment_id, $event)"
-              />
-            </div>
-
-            <!-- 回复列表移到这里，直接跟在评论操作后面 -->
-            <div v-if="comment.replies && comment.replies.length > 0" class="reply-list">
-              <div v-for="reply in comment.replies" :key="reply.comment_id" class="reply-item">
-                <user-info-bar
-                  :author="reply.author_name"
-                  :time="formatTime(reply.create_time)"
-                  :avatar-src="reply.avatar_src"
-                />
-                <p class="reply-content">
-                  <span class="reply-to">{{ reply.reply_to_user }}</span>
-                  {{ reply.content }}
-                </p>
-                <div class="reply-actions">
-                  <div class="action-left">
-                    <el-button 
-                      type="text" 
-                      class="reply-btn"
-                      @click="showReplyInput(reply, comment)">
-                      回复
-                    </el-button>
-                  </div>
-                  <div class="action-right">
-                    <vote-info-bar
-                      :author="reply.author_name"
-                      :time="formatTime(reply.create_time)"
-                      :vote-num="reply.vote_num"
-                      @vote="voteComment(reply.comment_id, $event)"
-                    />
-                  </div>
-                </div>
-                <!-- 二级回复的回复框 -->
-                <div v-if="reply.showReplyInput" class="reply-input nested">
-                  <comment-dialog
-                    type="comment"
-                    :visible.sync="reply.showReplyInput"
-                    :submitting="submitting"
-                    :placeholder="`回复 @${reply.author_name}：`"
-                    @submit="submitReply($event, reply)"
-                    @cancel="cancelReply(reply)"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- 一级评论的回复框 -->
-            <div v-if="comment.showReplyInput" class="reply-input">
-              <comment-dialog
-                type="comment"
-                :visible.sync="comment.showReplyInput"
-                :submitting="submitting"
-                :placeholder="`回复 @${comment.author_name}：`"
-                @submit="submitReply($event, comment)"
-                @cancel="cancelReply(comment)"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <comment-reply
+        :comments="comments"
+        :comment-count="post.comment_count"
+        :submitting="submitting"
+        @show-reply="showReplyInput"
+        @cancel-reply="cancelReply"
+        @submit-reply="submitReply"
+        @vote-comment="voteComment"
+      />
     </div>
     <div class="right">
       <div class="topic-info">
@@ -159,6 +77,7 @@
 import UserInfoBar from '@/components/UserInfoBar.vue';
 import VoteInfoBar from '@/components/VoteInfoBar.vue';
 import CommentDialog from '@/components/CommentDialog.vue';
+import CommentReply from '@/components/CommentReply.vue';
 import { formatTime } from '@/utils/timeFormat';
 
 export default {
@@ -166,7 +85,8 @@ export default {
   components: {
     UserInfoBar,
     VoteInfoBar,
-    CommentDialog
+    CommentDialog,
+    CommentReply
   },
   data() {
     return {
@@ -609,7 +529,7 @@ export default {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 0 0;
 
             .c-reply {
               font-size: 12px;

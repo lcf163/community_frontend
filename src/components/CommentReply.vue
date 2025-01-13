@@ -1,0 +1,254 @@
+<template>
+  <div class="comment-bar">
+    <div class="comment-list">
+      <div class="user-btn">
+        <span class="btn-item">
+          <i class="iconfont icon-comment"></i> 评论
+          <span class="comment-num">{{ commentCount || 0 }}</span>
+        </span>
+      </div>
+      <div v-if="comments.length === 0" class="no-comments">
+        暂无评论，快来发表第一条评论吧！
+      </div>
+      <div v-else v-for="comment in comments" :key="comment.comment_id" class="comment">
+        <div class="c-right">
+          <user-info-bar
+            :author="comment.author_name"
+            :time="formatTime(comment.create_time)"
+            :avatar-src="comment.avatar_src"
+          />
+          <p class="c-content">{{ comment.content }}</p>
+          <div class="comment-actions">
+            <el-button 
+              type="text" 
+              class="reply-btn"
+              @click.stop="$emit('show-reply', comment)">
+              回复
+            </el-button>
+            <vote-info-bar
+              :author="comment.author_name"
+              :time="formatTime(comment.create_time)"
+              :vote-num="comment.vote_num"
+              @vote="$emit('vote-comment', comment.comment_id, $event)"
+            />
+          </div>
+
+          <!-- 回复列表 -->
+          <div v-if="comment.replies && comment.replies.length > 0" class="reply-list">
+            <div v-for="reply in comment.replies" :key="reply.comment_id" class="reply-item">
+              <user-info-bar
+                :author="reply.author_name"
+                :time="formatTime(reply.create_time)"
+                :avatar-src="reply.avatar_src"
+              />
+              <p class="reply-content">
+                <span class="reply-to">@{{ reply.reply_to_user }}</span>
+                {{ reply.content }}
+              </p>
+              <div class="reply-actions">
+                <div class="action-left">
+                  <el-button 
+                    type="text" 
+                    class="reply-btn"
+                    @click.stop="$emit('show-reply', reply, comment)">
+                    回复
+                  </el-button>
+                </div>
+                <div class="action-right">
+                  <vote-info-bar
+                    :author="reply.author_name"
+                    :time="formatTime(reply.create_time)"
+                    :vote-num="reply.vote_num"
+                    @vote="$emit('vote-comment', reply.comment_id, $event)"
+                  />
+                </div>
+              </div>
+              <!-- 二级回复的回复框 -->
+              <div v-if="reply.showReplyInput" class="reply-input nested">
+                <comment-dialog
+                  type="comment"
+                  :visible.sync="reply.showReplyInput"
+                  :submitting="submitting"
+                  :placeholder="`回复 @${reply.author_name}：`"
+                  @submit="submitReply($event, reply)"
+                  @cancel="cancelReply(reply)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 一级评论的回复框 -->
+          <div v-if="comment.showReplyInput" class="reply-input">
+            <comment-dialog
+              type="comment"
+              :visible.sync="comment.showReplyInput"
+              :submitting="submitting"
+              :placeholder="`回复 @${comment.author_name}：`"
+              @submit="submitReply($event, comment)"
+              @cancel="cancelReply(comment)"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import UserInfoBar from './UserInfoBar.vue';
+import VoteInfoBar from './VoteInfoBar.vue';
+import CommentDialog from './CommentDialog.vue';
+import { formatTime } from '@/utils/timeFormat';
+
+export default {
+  name: 'CommentReply',
+  components: {
+    UserInfoBar,
+    VoteInfoBar,
+    CommentDialog
+  },
+  props: {
+    comments: {
+      type: Array,
+      default: () => []
+    },
+    commentCount: {
+      type: Number,
+      default: 0
+    },
+    submitting: {
+      type: Boolean,
+      default: false
+    }
+  },
+  methods: {
+    formatTime,
+    showReplyInput(comment, parentComment = null) {
+      this.$emit('show-reply', comment, parentComment);
+    },
+    cancelReply(comment) {
+      this.$emit('cancel-reply', comment);
+    },
+    submitReply(formData, comment) {
+      this.$emit('submit-reply', formData, comment);
+    },
+    voteComment(commentId, direction) {
+      this.$emit('vote-comment', commentId, direction);
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.comment-bar {
+  .comment-list {
+    padding: 20px;
+
+    .user-btn {
+      margin-bottom: 16px;
+      
+      .btn-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #878A8C;
+        font-size: 14px;
+        
+        .comment-num {
+          color: #1A1A1B;
+          font-weight: 700;
+        }
+      }
+    }
+
+    .no-comments {
+      text-align: center;
+      color: #878A8C;
+      padding: 20px 0;
+    }
+  }
+
+  .comment {
+    margin-bottom: 16px;
+    
+    .c-content {
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 8px 0;
+      word-break: break-word;
+    }
+
+    .comment-actions {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin: 4px 0;
+      gap: 16px;
+      
+      .reply-btn {
+        padding: 0;
+        margin: 0;
+        height: auto;
+        
+        &:hover {
+          color: #0079d3;
+        }
+      }
+    }
+
+    .reply-list {
+      margin-left: 20px;
+      padding: 8px 0;
+      border-left: 2px solid #f0f0f0;
+
+      .reply-item {
+        padding: 8px 16px;
+        
+        .reply-content {
+          font-size: 14px;
+          line-height: 1.4;
+          margin: 8px 0;
+          word-break: break-word;
+
+          .reply-to {
+            color: #0079d3;
+            font-weight: 500;
+            margin-right: 4px;
+          }
+        }
+
+        .reply-actions {
+          display: flex;
+          justify-content: flex-start;
+          align-items: center;
+          margin: 4px 0;
+          gap: 16px;
+
+          .action-left {
+            .reply-btn {
+              padding: 0;
+              margin: 0;
+              height: auto;
+              
+              &:hover {
+                color: #0079d3;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .reply-input {
+      margin: 8px 0;
+      padding: 8px;
+      background-color: #f6f7f8;
+      border-radius: 4px;
+
+      &.nested {
+        margin-left: 20px;
+      }
+    }
+  }
+}
+</style>
