@@ -44,7 +44,8 @@
       <div class="comment-list">
         <div class="user-btn">
           <span class="btn-item">
-            <i class="iconfont icon-comment"></i> 全部评论
+            <i class="iconfont icon-comment"></i> 评论
+            <span class="comment-num">{{ post.comment_count || 0 }}</span>
           </span>
         </div>
         <div v-if="comments.length === 0" class="no-comments">
@@ -115,6 +116,7 @@ export default {
         author_id: '',
         author_name: '',
         vote_num: 0,
+        comment_count: 0,
         post_id: '',
         title: '',
         content: '',
@@ -132,10 +134,12 @@ export default {
       editDialogVisible: false,
       editForm: {
         title: '',
-        content: ''
+        content: '',
+        post_id: ''
       },
       isAuthor: false,
-      showCommentInput: true
+      showCommentInput: true,
+      loading: false
     };
   },
   methods: {
