@@ -11,7 +11,12 @@
         <a class="login-btn" @click="goSignUp">注册</a>
       </div>
       <div class="user-box" v-show="isLogin">
-        <span class="user">{{ currUsername }}</span>
+        <user-info-bar
+          :author="currUsername"
+          :user-id="userId"
+          :time="''"
+          class="header-user-info"
+        />
         <div class="dropdown-content">
           <a @click="goLogout">登出</a>
         </div>
@@ -21,21 +26,32 @@
 </template>
 
 <script>
+import UserInfoBar from './UserInfoBar.vue'
+
 export default {
   name: "HeadBar",
-  created(){
+  components: {
+    UserInfoBar
+  },
+  created() {
     this.$store.commit("init");
+    if (this.$store.getters.isLogin) {
+      this.$store.dispatch('getUserInfo');
+    }
   },
   computed: {
     isLogin() {
       return this.$store.getters.isLogin;
     },
-    currUsername(){
+    currUsername() {
       return this.$store.getters.username;
+    },
+    userId() {
+      return this.$store.getters.userID;
     }
   },
   methods: {
-    goIndex(){
+    goIndex() {
       this.$router.push({ name: "Home" });
     },
     goLogin() {
@@ -44,14 +60,13 @@ export default {
     goSignUp() {
       this.$router.push({ name: "SignUp" });
     },
-    goLogout(){
+    goLogout() {
       this.$store.commit("logout");
     }
   }
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="less">
 .header {
   width: 100%;
@@ -141,49 +156,54 @@ export default {
         margin-right: 10px;
       }
     }
-    .user {
-      width: auto;
-      height: 24px;
-      background: url("../assets/images/avatar.png") no-repeat;
-      background-size: 24px 24px;
-      background-position: left center;
-      padding-left: 28px;
-      display: flex;
-      display: -webkit-flex;
-      align-items: center;
+    .user-box {
+      position: relative;
       cursor: pointer;
-      padding: 12px 12px 12px 28px;
-      &::after {
-        content: "";
-        width: 0;
-        height: 0;
-        border-top: 5px solid #878a8c;
-        border-right: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        border-left: 5px solid transparent;
-        margin-top: 5px;
-        margin-left: 10px;
-      }
-    }
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      background-color: #f9f9f9;
-      min-width: 160px;
-      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-      a {
-        color: black;
-        padding: 12px 16px;
-        text-decoration: none;
+
+      &:hover .dropdown-content {
         display: block;
-        cursor: pointer;
       }
-      a:hover {background-color: #f1f1f1}
-    }
-    .user-box:hover .dropdown-content {
-      display: block;
+
+      .header-user-info {
+        :deep(.user-info) {
+          background-color: transparent;
+          padding: 0;
+          
+          .post-time {
+            display: none;
+          }
+          
+          .user-meta {
+            .username {
+              font-size: 14px;
+              margin-right: 20px;
+            }
+          }
+        }
+      }
+
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+
+        a {
+          color: black;
+          padding: 12px 16px;
+          text-decoration: none;
+          display: block;
+          cursor: pointer;
+
+          &:hover {
+            background-color: #f1f1f1;
+          }
+        }
+      }
     }
   }
-  
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
   <div class="user-info">
-    <img class="avatar" :src="avatarSrc" alt="avatar"/>
+    <img class="avatar" :src="computedAvatarSrc" alt="avatar"/>
     <div class="user-meta">
-      <span class="username">{{ author || '匿名用户' }}</span>
-      <span class="post-time">发布于 {{ time }}</span>
+      <span class="username">{{ userInfo.username || author || '匿名用户' }}</span>
+      <span v-if="time" class="post-time">发布于 {{ time }}</span>
     </div>
   </div>
 </template>
@@ -14,12 +14,55 @@ export default {
   props: {
     author: String,
     time: String,
+    userId: {
+      type: [String, Number],
+      required: true
+    },
     avatarSrc: {
       type: String,
-      default: require('@/assets/images/avatar.png')
+      default: ''
     }
   },
-  methods: {}
+  data() {
+    return {
+      userInfo: {
+        avatar: '',
+        username: ''
+      }
+    }
+  },
+  computed: {
+    computedAvatarSrc() {
+      if (this.avatarSrc) {
+        return this.avatarSrc;
+      }
+      return this.userInfo.avatar ? require(`@/assets/images/avatar/${this.userInfo.avatar}`) : require('@/assets/images/avatar.png');
+    }
+  },
+  created() {
+    if (!this.avatarSrc) {
+      this.getUserInfo();
+    }
+  },
+  methods: {
+    getUserInfo() {
+      this.$axios({
+        method: 'get',
+        url: `/user/${this.userId}`
+      })
+      .then(response => {
+        if (response.code === 1000 && response.data) {
+          this.userInfo = {
+            avatar: response.data.avatar || '',
+            username: response.data.username || this.author
+          };
+        }
+      })
+      .catch(error => {
+        console.error('获取用户信息失败:', error);
+      });
+    }
+  }
 }
 </script>
 
@@ -29,8 +72,8 @@ export default {
   align-items: center;
   margin-bottom: 0;
   padding: 8px 0;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+  background-color: transparent;
+  border-radius: 0;
   min-height: 32px;
 
   .avatar {

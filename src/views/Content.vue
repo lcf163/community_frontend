@@ -7,7 +7,8 @@
             <user-info-bar
               :author="post.author_name"
               :time="formatTime(post.create_time)"
-              :avatar-src="post.avatar_src"
+              :user-id="post.author_id"
+              :avatar-src="post.avatar_url"
             />
             <h4 class="post-title">{{ post.title }}</h4>
           </div>
@@ -124,6 +125,10 @@ export default {
         content: ''
       },
       isAuthor: false,
+      userInfo: {
+        avatar: '',
+        username: ''
+      },
       showCommentInput: true,
       loading: false,
       activeComment: null, // 当前激活的评论
@@ -142,18 +147,18 @@ export default {
     },
     getPostDetail() {
       const postId = this.$route.params.id;
-      if (!postId) {
-        this.$router.push({ name: "Home" });
-        return;
-      }
+      if (!postId) return;
 
       this.$axios({
         method: "get",
         url: "/post/" + postId,
       })
       .then(response => {
-        if (response.code == 1000) {
+        if (response.code === 1000) {
           this.post = response.data;
+          if (response.data.author_id) {
+            this.getAuthorInfo(response.data.author_id);
+          }
           this.checkIsAuthor();
         } else {
           this.$message.error(response.message);
@@ -416,6 +421,30 @@ export default {
     handleCurrentChange(val) {
       this.pageNumber = val;
       this.getComments();
+    },
+    // 新增获取作者信息的方法
+    getAuthorInfo(authorId) {
+      this.$axios({
+        method: 'get',
+        url: `/user/${authorId}`
+      })
+      .then(response => {
+        console.log("getAuthorInfo", response);
+        if (response.code === 1000 && response.data) {
+          // 修改这里：处理头像路径
+          const avatarUrl = response.data.avatar ? 
+            require(`@/assets/images/avatar/${response.data.avatar}`) : 
+            require('@/assets/images/avatar.png');
+          
+          this.post = {
+            ...this.post,
+            avatar_url: avatarUrl
+          };
+        }
+      })
+      .catch(error => {
+        console.error('获取作者信息失败:', error);
+      });
     }
   },
   watch: {
@@ -693,8 +722,41 @@ export default {
         margin-bottom: 16px;
         
         .post-header {
-          padding: 2px 16px;
+          padding: 8px 12px;
           border-bottom: 1px solid #edeff1;
+
+          :deep(.user-info) {
+            margin-bottom: 8px;
+            
+            .avatar {
+              width: 32px;
+              height: 32px;
+            }
+
+            .user-meta {
+              .username {
+                font-size: 14px;
+                color: #1a1a1b;
+              }
+
+              .post-time {
+                font-size: 12px;
+                color: #787c7e;
+              }
+            }
+          }
+
+          .post-title {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 32px;
+            color: #1a1a1b;
+            margin: 8px 0 0 0;
+            padding: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            letter-spacing: 0.5px;
+          }
 
           .edit-btn {
             font-size: 12px;
@@ -713,18 +775,6 @@ export default {
             justify-content: space-between;
             margin-bottom: 0;
             padding: 0 0;
-          }
-
-          .post-title {
-            font-size: 24px;
-            font-weight: 700;
-            line-height: 32px;
-            color: #1a1a1b;
-            margin: 0;
-            padding: 0;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            letter-spacing: 0.5px;
           }
         }
 

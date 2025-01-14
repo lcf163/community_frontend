@@ -16,6 +16,7 @@
             :author="comment.author_name"
             :time="formatTime(comment.create_time)"
             :avatar-src="comment.avatar_src"
+            :user-id="comment.author_id"
           />
           <p class="c-content">{{ comment.content }}</p>
           <div class="comment-actions">
@@ -40,9 +41,10 @@
                 :author="reply.author_name"
                 :time="formatTime(reply.create_time)"
                 :avatar-src="reply.avatar_src"
+                :user-id="reply.author_id"
               />
               <p class="reply-content">
-                <span class="reply-to">@{{ reply.reply_to_user }}</span>
+                <span class="reply-to" v-if="reply.reply_to_name">@{{ reply.reply_to_name }}</span>
                 {{ reply.content }}
               </p>
               <div class="reply-actions">

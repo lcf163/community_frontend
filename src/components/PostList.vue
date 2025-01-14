@@ -4,7 +4,7 @@
       <user-info-bar
         :author="post.author_name"
         :time="time"
-        :avatar-src="post.avatar_src"
+        :user-id="post.author_id"
       />
       <h4 class="post-title">{{ post.title }}</h4>
       <div class="post-content">
@@ -44,6 +44,11 @@ export default {
     isAuthor: {
       type: Boolean,
       default: false
+    },
+  },
+  computed: {
+    avatarSrc() {
+      return this.post.avatar ? require(`@/assets/images/avatar/${this.post.avatar}`) : require('@/assets/images/avatar.png');
     }
   },
   methods: {
