@@ -50,13 +50,13 @@
         @submit-reply="submitReply"
         @vote-comment="voteComment"
       />
-      <!-- <page-bar
+      <page-bar
         :current-page="pageNumber"
         :page-size="pageSize"
-        :total="pageTotal?.total || 0"
+        :total="pageTotal.total || 0"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-      /> -->
+      />
     </div>
     <div class="right">
       <div class="topic-info">
@@ -85,7 +85,7 @@ import UserInfoBar from '@/components/UserInfoBar.vue';
 import VoteInfoBar from '@/components/VoteInfoBar.vue';
 import CommentDialog from '@/components/CommentDialog.vue';
 import CommentReply from '@/components/CommentReply.vue';
-// import PageBar from '@/components/PageBar.vue'
+import PageBar from '@/components/PageBar.vue'
 import { formatTime } from '@/utils/timeFormat';
 
 export default {
@@ -95,7 +95,7 @@ export default {
     VoteInfoBar,
     CommentDialog,
     CommentReply,
-    // PageBar
+    PageBar
   },
   data() {
     return {
@@ -127,11 +127,13 @@ export default {
       showCommentInput: true,
       loading: false,
       activeComment: null, // 当前激活的评论
-      // pageNumber: 1,
-      // pageSize: 10,
-      // pageTotal: {
-      //   total: 0
-      // }
+      pageNumber: 1,
+      pageSize: 5,
+      pageTotal: {
+        total: 0,
+        page: 1,
+        size: 5
+      }
     };
   },
   methods: {
@@ -208,33 +210,40 @@ export default {
       this.$axios({
         method: "get",
         url: `/comment/${postId}`,
+        params: {
+          page: this.pageNumber,
+          size: this.pageSize
+        }
       })
       .then(response => {
-        if (response.code == 1000) {
-          // 为每个评论添加响应式属性
-          const comments = response.data.map(comment => {
+        if (response.code === 1000 && response.data) {
+          // 更新分页信息
+          this.pageTotal = response.data.page;
+          
+          // 处理评论列表
+          const commentList = response.data.list || [];
+          const comments = commentList.map(comment => {
+            // 为每个评论添加响应式属性
             this.$set(comment, 'showReplyInput', false);
-            // 确保 replies 是数组
-            if (!Array.isArray(comment.replies)) {
-              this.$set(comment, 'replies', []);
+            this.$set(comment, 'replies', []);
+            
+            // 如果评论有回复数量，获取回复列表
+            if (comment.reply_count > 0) {
+              this.getCommentReplies(comment);
             }
-            // 为每个回复添加响应式属性
-            comment.replies = comment.replies.map(reply => {
-              this.$set(reply, 'showReplyInput', false);
-              return reply;
-            });
-            // 获取评论的回复列表
-            this.getCommentReplies(comment);
+            
             return comment;
           });
+          
           this.comments = comments;
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message || '获取评论失败');
           this.comments = [];
         }
       })
       .catch(error => {
-        this.$message.error('getComments error:' + error);
+        console.error('getComments error:', error);
+        this.$message.error('获取评论列表失败');
         this.comments = [];
       });
     },
@@ -245,19 +254,23 @@ export default {
         method: 'get',
         url: `/comment/reply/${comment.comment_id}`,
       }).then(response => {
-        if (response.code === 1000) {
+        if (response.code === 1000 && Array.isArray(response.data)) {
           // 为每个回复添加响应式属性
           const replies = response.data.map(reply => {
+            // 添加显示回复输入框的标志
             this.$set(reply, 'showReplyInput', false);
             return reply;
           });
+          
           // 使用 Vue.set 确保响应式更新
           this.$set(comment, 'replies', replies);
         } else {
           console.error('获取回复列表失败:', response.message);
+          this.$set(comment, 'replies', []);
         }
       }).catch(error => {
         console.error('获取回复列表错误:', error);
+        this.$set(comment, 'replies', []);
       });
     },
     cancelComment() {
@@ -365,13 +378,14 @@ export default {
         post_id: this.post.post_id,
         parent_id: parentComment.comment_id,  // 添加 parent_id
         content: formData.content,
+        reply_to_uid: comment.author_id,  // 添加回复目标用户ID
         reply_to_user: comment.author_name
       };
 
       this.submitting = true;
       this.$axios({
         method: 'post',
-        url: '/comment/reply',  // 修改为统一的回复接口
+        url: '/comment/reply',
         data: replyData
       }).then(response => {
         if (response.code === 1000) {
@@ -394,6 +408,15 @@ export default {
         this.submitting = false;
       });
     },
+    handleSizeChange(val) {
+      this.pageSize = val;
+      this.pageNumber = 1; // 重置页码
+      this.getComments();
+    },
+    handleCurrentChange(val) {
+      this.pageNumber = val;
+      this.getComments();
+    }
   },
   watch: {
     post: {
