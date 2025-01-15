@@ -36,11 +36,18 @@ export default {
       if (this.avatarSrc) {
         return this.avatarSrc;
       }
-      return this.userInfo.avatar ? require(`@/assets/images/avatar/${this.userInfo.avatar}`) : require('@/assets/images/avatar.png');
+      if (this.userId === this.$store.getters.userID) {
+        return this.$store.getters.avatar ? 
+          require(`@/assets/images/avatar/${this.$store.getters.avatar}`) : 
+          require('@/assets/images/avatar.png');
+      }
+      return this.userInfo.avatar ? 
+        require(`@/assets/images/avatar/${this.userInfo.avatar}`) : 
+        require('@/assets/images/avatar.png');
     }
   },
   created() {
-    if (!this.avatarSrc) {
+    if (!this.avatarSrc && this.userId !== this.$store.getters.userID) {
       this.getUserInfo();
     }
   },

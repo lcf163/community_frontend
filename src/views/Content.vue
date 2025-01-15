@@ -125,13 +125,9 @@ export default {
         content: ''
       },
       isAuthor: false,
-      userInfo: {
-        avatar: '',
-        username: ''
-      },
       showCommentInput: true,
       loading: false,
-      activeComment: null, // 当前激活的评论
+      activeComment: null,
       pageNumber: 1,
       pageSize: 5,
       pageTotal: {
@@ -155,10 +151,17 @@ export default {
       })
       .then(response => {
         if (response.code === 1000) {
-          this.post = response.data;
-          if (response.data.author_id) {
-            this.getAuthorInfo(response.data.author_id);
-          }
+          // 处理头像路径
+          const avatarUrl = response.data.author_avatar ? 
+            require(`@/assets/images/avatar/${response.data.author_avatar}`) : 
+            require('@/assets/images/avatar.png');
+          
+          // 合并数据，直接使用后端返回的作者信息
+          this.post = {
+            ...response.data,
+            avatar_url: avatarUrl
+          };
+          
           this.checkIsAuthor();
         } else {
           this.$message.error(response.message);
@@ -228,12 +231,18 @@ export default {
           // 处理评论列表
           const commentList = response.data.list || [];
           const comments = commentList.map(comment => {
+            // 处理头像路径
+            const avatarUrl = comment.author_avatar ? 
+              require(`@/assets/images/avatar/${comment.author_avatar}`) : 
+              require('@/assets/images/avatar.png');
+            
             // 为每个评论添加响应式属性
             this.$set(comment, 'showReplyInput', false);
             this.$set(comment, 'replies', []);
+            this.$set(comment, 'avatar_src', avatarUrl);
             
-            // 如果评论有回复数量，获取回复列表
-            if (comment.reply_count > 0) {
+            // 如果评论有回复数量且大于0，获取回复列表
+            if (comment.reply_count && comment.reply_count > 0) {
               this.getCommentReplies(comment);
             }
             
@@ -260,14 +269,25 @@ export default {
         url: `/comment/reply/${comment.comment_id}`,
       }).then(response => {
         if (response.code === 1000 && Array.isArray(response.data)) {
-          // 为每个回复添加响应式属性
+          // 处理回复列表，添加头像路径
           const replies = response.data.map(reply => {
-            // 添加显示回复输入框的标志
+            // 处理头像路径
+            const avatarUrl = reply.author_avatar ? 
+              require(`@/assets/images/avatar/${reply.author_avatar}`) : 
+              require('@/assets/images/avatar.png');
+            
+            // 添加显示回复输入框的标志和头像路径
             this.$set(reply, 'showReplyInput', false);
+            this.$set(reply, 'avatar_src', avatarUrl);
+            
+            // 确保回复目标用户信息有效
+            if (!reply.reply_to_name) {
+              reply.reply_to_name = reply.reply_to_user || comment.author_name;
+            }
+            
             return reply;
           });
           
-          // 使用 Vue.set 确保响应式更新
           this.$set(comment, 'replies', replies);
         } else {
           console.error('获取回复列表失败:', response.message);
@@ -340,9 +360,8 @@ export default {
       })
     },
     checkIsAuthor() {
-      let loginResult = JSON.parse(localStorage.getItem("loginResult"));
-      const userId = loginResult?.user_id;
-      this.isAuthor = userId && parseInt(userId) === this.post.author_id;
+      const userId = this.$store.getters.userID;
+      this.isAuthor = userId && userId === this.post.author_id;
     },
     // 显示回复输入框
     showReplyInput(comment, parentComment = null) {
@@ -381,10 +400,10 @@ export default {
       const parentComment = comment.parentComment || comment;
       const replyData = {
         post_id: this.post.post_id,
-        parent_id: parentComment.comment_id,  // 添加 parent_id
+        parent_id: parentComment.comment_id,
         content: formData.content,
-        reply_to_uid: comment.author_id,  // 添加回复目标用户ID
-        reply_to_user: comment.author_name
+        reply_to_uid: comment.author_id,
+        reply_to_name: comment.author_name
       };
 
       this.submitting = true;
@@ -395,9 +414,7 @@ export default {
       }).then(response => {
         if (response.code === 1000) {
           this.$message.success('回复成功');
-          // 刷新评论列表，确保数据同步
           this.getComments();
-          // 关闭回复框
           this.$set(comment, 'showReplyInput', false);
           if (comment.parentComment) {
             this.$delete(comment, 'parentComment');
@@ -422,30 +439,6 @@ export default {
       this.pageNumber = val;
       this.getComments();
     },
-    // 新增获取作者信息的方法
-    getAuthorInfo(authorId) {
-      this.$axios({
-        method: 'get',
-        url: `/user/${authorId}`
-      })
-      .then(response => {
-        console.log("getAuthorInfo", response);
-        if (response.code === 1000 && response.data) {
-          // 修改这里：处理头像路径
-          const avatarUrl = response.data.avatar ? 
-            require(`@/assets/images/avatar/${response.data.avatar}`) : 
-            require('@/assets/images/avatar.png');
-          
-          this.post = {
-            ...this.post,
-            avatar_url: avatarUrl
-          };
-        }
-      })
-      .catch(error => {
-        console.error('获取作者信息失败:', error);
-      });
-    }
   },
   watch: {
     post: {

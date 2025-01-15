@@ -35,7 +35,7 @@ export default {
   },
   created() {
     this.$store.commit("init");
-    if (this.$store.getters.isLogin) {
+    if (this.$store.getters.isLogin && !this.$store.state.userInfoFetched) {
       this.$store.dispatch('getUserInfo');
     }
   },

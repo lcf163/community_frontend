@@ -18,6 +18,7 @@ export default new Vuex.Store({
     isLogin: false, // 用户登录状态
     loginResult: defaultLoginResult, // 存储登录结果
     userInfoFetched: false, // 新增：标记是否已获取用户信息
+    _gettingUserInfo: false, // 新增：防止重复请求
   },
   getters: {
     isLogin: state => state.loginResult.user_id !== null, // 判断用户是否登录
@@ -56,13 +57,21 @@ export default new Vuex.Store({
   actions: {
     // 获取用户信息
     getUserInfo({ commit, state }) {
-      // 如果已经获取过用户信息且用户已登录，则不重复获取
+      // 添加一个标志位，防止重复请求
+      if (state._gettingUserInfo) {
+        return Promise.resolve();
+      }
+
+      // 如果已经获取过且有用户ID，直接返回
       if (state.userInfoFetched && state.loginResult.user_id) {
         return Promise.resolve();
       }
 
       const userId = state.loginResult.user_id;
       if (!userId) return Promise.resolve();
+
+      // 设置标志位
+      state._gettingUserInfo = true;
 
       return Vue.prototype.$axios({
         method: 'get',
@@ -83,6 +92,10 @@ export default new Vuex.Store({
       })
       .catch(error => {
         console.error('获取用户信息失败:', error);
+      })
+      .finally(() => {
+        // 清除标志位
+        state._gettingUserInfo = false;
       });
     }
   }
