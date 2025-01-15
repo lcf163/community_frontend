@@ -11,10 +11,9 @@
         <a class="login-btn" @click="goSignUp">注册</a>
       </div>
       <div class="user-box" v-show="isLogin">
-        <user-info-bar
-          :author="currUsername"
-          :user-id="userId"
-          :time="''"
+        <user-avatar
+          :username="currUsername"
+          :avatar-src="computedAvatarSrc"
           class="header-user-info"
         />
         <div class="dropdown-content">
@@ -26,18 +25,12 @@
 </template>
 
 <script>
-import UserInfoBar from './UserInfoBar.vue'
+import UserAvatar from './UserAvatar.vue'
 
 export default {
   name: "HeadBar",
   components: {
-    UserInfoBar
-  },
-  created() {
-    this.$store.commit("init");
-    if (this.$store.getters.isLogin && !this.$store.state.userInfoFetched) {
-      this.$store.dispatch('getUserInfo');
-    }
+    UserAvatar
   },
   computed: {
     isLogin() {
@@ -48,6 +41,16 @@ export default {
     },
     userId() {
       return this.$store.getters.userID;
+    },
+    computedAvatarSrc() {
+      const avatar = this.$store.getters.avatar;
+      return avatar ? require(`@/assets/images/avatar/${avatar}`) : require('@/assets/images/avatar.png');
+    }
+  },
+  created() {
+    this.$store.commit("init");
+    if (this.isLogin && !this.$store.state.userInfoFetched) {
+      this.$store.dispatch("getUserInfo");
     }
   },
   methods: {
@@ -62,9 +65,10 @@ export default {
     },
     goLogout() {
       this.$store.commit("logout");
+      this.$router.push({ name: "Login" });
     }
   }
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -165,19 +169,17 @@ export default {
       }
 
       .header-user-info {
-        :deep(.user-info) {
-          background-color: transparent;
-          padding: 0;
-          
-          .post-time {
-            display: none;
-          }
-          
-          .user-meta {
-            .username {
-              font-size: 14px;
-              margin-right: 20px;
-            }
+        background-color: transparent;
+        padding: 0;
+        
+        .post-time {
+          display: none;
+        }
+        
+        .user-meta {
+          .username {
+            font-size: 14px;
+            margin-right: 20px;
           }
         }
       }

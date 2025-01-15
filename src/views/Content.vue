@@ -4,10 +4,9 @@
       <div class="container">
         <div class="l-container">
           <div class="post-header">
-            <user-info-bar
-              :author="post.author_name"
+            <user-avatar
+              :username="post.author_name"
               :time="formatTime(post.create_time)"
-              :user-id="post.author_id"
               :avatar-src="post.avatar_url"
             />
             <h4 class="post-title">{{ post.title }}</h4>
@@ -82,7 +81,7 @@
 </template>
 
 <script>
-import UserInfoBar from '@/components/UserInfoBar.vue';
+import UserAvatar from '@/components/UserAvatar.vue'
 import VoteInfoBar from '@/components/VoteInfoBar.vue';
 import CommentDialog from '@/components/CommentDialog.vue';
 import CommentReply from '@/components/CommentReply.vue';
@@ -92,7 +91,7 @@ import { formatTime } from '@/utils/timeFormat';
 export default {
   name: 'Content',
   components: {
-    UserInfoBar,
+    UserAvatar,
     VoteInfoBar,
     CommentDialog,
     CommentReply,

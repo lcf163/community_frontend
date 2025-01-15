@@ -11,14 +11,15 @@
         暂无评论，快来发表第一条评论吧！
       </div>
       <div v-else v-for="comment in comments" :key="comment.comment_id" class="comment">
+        <user-avatar
+          :username="comment.author_name"
+          :time="formatTime(comment.create_time)"
+          :avatar-src="comment.author_avatar ? 
+            require(`@/assets/images/avatar/${comment.author_avatar}`) : 
+            require('@/assets/images/avatar.png')"
+        />
         <div class="c-right">
-          <user-info-bar
-            :author="comment.author_name"
-            :time="formatTime(comment.create_time)"
-            :avatar-src="comment.avatar_src"
-            :user-id="comment.author_id"
-          />
-          <p class="c-content">{{ comment.content }}</p>
+          <div class="c-content">{{ comment.content }}</div>
           <div class="comment-actions">
             <el-button 
               type="text" 
@@ -36,17 +37,18 @@
 
           <!-- 回复列表 -->
           <div v-if="comment.replies && comment.replies.length > 0" class="reply-list">
-            <div v-for="reply in comment.replies" :key="reply.comment_id" class="reply-item">
-              <user-info-bar
-                :author="reply.author_name"
+            <div v-for="reply in comment.replies" :key="reply.reply_id" class="reply-item">
+              <user-avatar
+                :username="reply.author_name"
                 :time="formatTime(reply.create_time)"
-                :avatar-src="reply.avatar_src"
-                :user-id="reply.author_id"
+                :avatar-src="reply.author_avatar ? 
+                  require(`@/assets/images/avatar/${reply.author_avatar}`) : 
+                  require('@/assets/images/avatar.png')"
               />
-              <p class="reply-content">
-                <span class="reply-to" v-if="reply.reply_to_name">@{{ reply.reply_to_name }}</span>
+              <div class="reply-content">
+                <span class="reply-to">回复 @{{ reply.reply_to_name }}：</span>
                 {{ reply.content }}
-              </p>
+              </div>
               <div class="reply-actions">
                 <div class="action-left">
                   <el-button 
@@ -97,7 +99,7 @@
 </template>
 
 <script>
-import UserInfoBar from './UserInfoBar.vue';
+import UserAvatar from './UserAvatar.vue'
 import VoteInfoBar from './VoteInfoBar.vue';
 import CommentDialog from './CommentDialog.vue';
 import { formatTime } from '@/utils/timeFormat';
@@ -105,7 +107,7 @@ import { formatTime } from '@/utils/timeFormat';
 export default {
   name: 'CommentReply',
   components: {
-    UserInfoBar,
+    UserAvatar,
     VoteInfoBar,
     CommentDialog
   },
@@ -199,43 +201,19 @@ export default {
     }
 
     .reply-list {
-      margin-left: 20px;
-      padding: 8px 0;
-      border-left: 2px solid #f0f0f0;
-
+      margin-left: 24px;
+      margin-top: 8px;
+      
       .reply-item {
-        padding: 8px 16px;
+        margin-bottom: 8px;
         
         .reply-content {
+          margin-left: 8px;
           font-size: 14px;
-          line-height: 1.4;
-          margin: 8px 0;
-          word-break: break-word;
-
+          
           .reply-to {
             color: #0079d3;
-            font-weight: 500;
-            margin-right: 4px;
-          }
-        }
-
-        .reply-actions {
-          display: flex;
-          justify-content: flex-start;
-          align-items: center;
-          margin: 4px 0;
-          gap: 16px;
-
-          .action-left {
-            .reply-btn {
-              padding: 0;
-              margin: 0;
-              height: auto;
-              
-              &:hover {
-                color: #0079d3;
-              }
-            }
+            font-weight: 600;
           }
         }
       }

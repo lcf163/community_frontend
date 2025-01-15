@@ -1,10 +1,12 @@
 <template>
   <div class="post">
     <div class="l-container" @click="goDetail(post.post_id)">
-      <user-info-bar
-        :author="post.author_name"
+      <user-avatar
+        :username="post.author_name"
         :time="time"
-        :user-id="post.author_id"
+        :avatar-src="post.author_avatar ? 
+          require(`@/assets/images/avatar/${post.author_avatar}`) : 
+          require('@/assets/images/avatar.png')"
       />
       <h4 class="post-title">{{ post.title }}</h4>
       <div class="post-content">
@@ -23,13 +25,13 @@
 </template>
 
 <script>
-import UserInfoBar from './UserInfoBar.vue'
+import UserAvatar from './UserAvatar.vue'
 import VoteInfoBar from './VoteInfoBar.vue'
 
 export default {
   name: 'PostList',
   components: {
-    UserInfoBar,
+    UserAvatar,
     VoteInfoBar
   },
   props: {
@@ -44,11 +46,6 @@ export default {
     isAuthor: {
       type: Boolean,
       default: false
-    },
-  },
-  computed: {
-    avatarSrc() {
-      return this.post.avatar ? require(`@/assets/images/avatar/${this.post.avatar}`) : require('@/assets/images/avatar.png');
     }
   },
   methods: {

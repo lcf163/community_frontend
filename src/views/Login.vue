@@ -33,27 +33,34 @@ export default {
 
 	},
 	methods: {
-		submit() {
-			this.$axios({
-				method: 'post',
-				url:'/login',
-				data: JSON.stringify({
-					username: this.username,
-					password: this.password
-				})
-			})
-      .then((res)=>{
+		async submit() {
+			try {
+				const res = await this.$axios({
+					method: 'post',
+					url:'/login',
+					data: JSON.stringify({
+						username: this.username,
+						password: this.password
+					})
+				});
+				
 				if (res.code == 1000) {
-          localStorage.setItem("loginResult", JSON.stringify(res.data));
-          this.$store.commit("login", res.data);
-          this.$router.push({path: this.redirect || '/' })
+					// 1. 保存登录信息
+					localStorage.setItem("loginResult", JSON.stringify(res.data));
+					this.$store.commit("login", res.data);
+					
+					// 2. 获取用户信息
+					await this.$store.dispatch("getUserInfo");
+					
+					// 3. 跳转到首页
+					this.$router.push({path: this.redirect || '/' });
 				} else {
-          console.log("login fail:", res.message)
+					this.$message.error(res.message || "登录失败");
 				}
-			})
-      .catch((error) => {
-				console.error("login error:", error)
-			})
+			} catch (error) {
+				console.error("login error:", error);
+				this.$message.error("登录失败，请重试");
+			}
 		}
 	}
 };
