@@ -124,7 +124,8 @@ export default {
 				method: "post",
 				url: "/vote",
 				data: {
-					post_id: post_id,
+					target_id: post_id,
+					target_type: 1,
 					direction: direction,
 				}
 			})
