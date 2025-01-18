@@ -28,7 +28,7 @@
         <page-bar
           :current-page="pageNumber"
           :page-size="pageSize"
-          :total="pageTotal?.total || 0"
+          :total="total"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
@@ -67,10 +67,8 @@ export default {
       order: "time",
       postList: [],
       pageNumber: 1,
-      pageSize: 5,
-      pageTotal: {
-        total: 0
-      },
+      pageSize: 10,
+      total: 0,
       keyword: '',
       isSearch: false,
       communityList: [],
@@ -116,25 +114,20 @@ export default {
         params: {
           page: this.pageNumber,
           size: this.pageSize,
-          order: this.order,
+          order: this.order
         }
       })
       .then(response => {
         if (response.code === 1000) {
-          this.postList = response.data.list;
-          this.pageTotal = {
-            total: response.data.page.total
-          };
+          this.total = response.data.page.total;
+          this.postList = response.data.list || [];
         } else {
-          console.log("getPostList fail:", response.message);
-          this.postList = [];
-          this.pageTotal = { total: 0 };
+          this.$message.error(response.message || '获取帖子列表失败');
         }
       })
       .catch(error => {
-        console.error("getPostList error:", error);
-        this.postList = [];
-        this.pageTotal = { total: 0 };
+        console.error('获取帖子列表失败:', error);
+        this.$message.error('获取帖子列表失败');
       });
     },
     getCommunityList() {      
@@ -191,7 +184,7 @@ export default {
       });
       if (response.code === 1000) {
         this.postList = response.data.list;
-        this.pageTotal = response.data.page;
+        this.total = response.data.page.total;
       } else {
         console.log("searchPost fail:", response.message);
       }

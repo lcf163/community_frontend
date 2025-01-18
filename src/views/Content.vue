@@ -53,7 +53,7 @@
       <page-bar
         :current-page="pageNumber"
         :page-size="pageSize"
-        :total="pageTotal.total || 0"
+        :total="total"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -129,11 +129,7 @@ export default {
       activeComment: null,
       pageNumber: 1,
       pageSize: 5,
-      pageTotal: {
-        total: 0,
-        page: 1,
-        size: 5
-      }
+      total: 0,
     };
   },
   methods: {
@@ -246,8 +242,8 @@ export default {
       })
       .then(response => {
         if (response.code === 1000 && response.data) {
-          // 更新分页信息
-          this.pageTotal = response.data.page;
+          // 直接使用 total 值
+          this.total = response.data.page.total;
           
           // 处理评论列表
           const commentList = response.data.list || [];

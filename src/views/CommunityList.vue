@@ -22,7 +22,7 @@
       <page-bar
         :current-page="pageNumber"
         :page-size="pageSize"
-        :total="pageTotal.total || 0"
+        :total="total"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -43,9 +43,7 @@ export default {
       communityList: [],
       pageNumber: 1,
       pageSize: 3,
-      pageTotal: {
-        total: 0
-      }
+      total: 0
     }
   },
   methods: {
@@ -69,20 +67,15 @@ export default {
       })
       .then(response => {
         if (response.code === 1000) {
-          this.communityList = response.data.list;
-          this.pageTotal = {
-            total: response.data.page?.total || 0
-          };
+          this.total = response.data.page.total;
+          this.communityList = response.data.list || [];
         } else {
-          console.log("getCommunityList fail:", response.message);
-          this.communityList = [];
-          this.pageTotal = { total: 0 };
+          this.$message.error(response.message || '获取社区列表失败');
         }
       })
       .catch(error => {
-        console.error("getCommunityList error:", error);
-        this.communityList = [];
-        this.pageTotal = { total: 0 };
+        console.error('获取社区列表失败:', error);
+        this.$message.error('获取社区列表失败');
       });
     },
     goCommunityDetail(id) {
