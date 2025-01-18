@@ -31,27 +31,27 @@ export default {
 
 <style lang="less" scoped>
 .vote-info-bar {
-    .vote-actions {
-      display: flex;
-      align-items: center;
-      margin-left: 0;
+  .vote-actions {
+    display: flex;
+    align-items: center;
+    margin-left: 0;
+    
+    .vote {
+      padding: 4px;
+      cursor: pointer;
+      color: #878A8C;
       
-      .vote {
-        padding: 4px;
-        cursor: pointer;
-        color: #878A8C;
-        
-        &:hover {
-          color: #0079d3;
-        }
-      }
-      
-      .vote-num {
-        font-size: 12px;
-        font-weight: 600;
-        margin: 0 4px;
-        color: #1a1a1b;
+      &:hover {
+        color: #0079d3;
       }
     }
+    
+    .vote-num {
+      font-size: 12px;
+      font-weight: 600;
+      margin: 0 4px;
+      color: #1a1a1b;
+    }
+  }
 }
 </style> 

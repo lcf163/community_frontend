@@ -58,8 +58,8 @@ export default {
 					this.$message.error(res.message || "登录失败");
 				}
 			} catch (error) {
-				console.error("login error:", error);
-				this.$message.error("登录失败，请重试");
+				console.error("submit error:", error);
+				this.$message.error("登录失败");
 			}
 		}
 	}

@@ -93,7 +93,7 @@ export default {
         }
       })
       .catch(error => {
-        console.error('获取用户信息失败:', error);
+        console.error('getUserInfo error:', error);   
         this.$message.error('获取用户信息失败');
       });
     },
@@ -125,7 +125,7 @@ export default {
         }
       })
       .catch(error => {
-        console.error('获取用户帖子失败:', error);
+        console.error('getUserPosts error:', error);
         this.$message.error('获取用户帖子失败');
       });
     },
@@ -139,11 +139,12 @@ export default {
         if (response.code === 1000) {
           this.getUserPosts();
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message || '投票失败');
         }
       })
       .catch(error => {
-        this.$message.error('投票失败: ' + error);
+        console.error('handleVote error:', error);
+        this.$message.error('投票失败');
       });
     },
     goDetail(id) {

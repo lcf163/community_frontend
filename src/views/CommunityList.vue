@@ -83,7 +83,7 @@ export default {
         }
       })
       .catch(error => {
-        console.error('获取社区列表失败:', error);
+        console.error('getCommunityList error:', error);  
         this.$message.error('获取社区列表失败');
       });
     },

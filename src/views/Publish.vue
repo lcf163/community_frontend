@@ -78,13 +78,14 @@ export default {
         if (response.code == 1000) {
           this.$router.push({ path: this.redirect || "/" });
         } else {
-          console.log("publish fail:", response.message);
+          this.$message.error(response.message || "发布失败");
         }
       })
       .catch(error => {
-        console.error("publish error:", error);
+        console.error("submit error:", error);
+        this.$message.error("发布失败");
       });
-  },
+    },
     getCommunityList() {
       this.$axios({
         method: "get",
@@ -94,11 +95,12 @@ export default {
         if (response.code == 1000) {
           this.communityList = response.data;
         } else {
-          console.log("getCommunityList fail:", response.message);
+          this.$message.error(response.message || "获取社区列表失败");
         }
       })
       .catch(error => {
         console.error("getCommunityList error:", error);
+        this.$message.error("获取社区列表失败");
       });
     },
     showCommunity(){

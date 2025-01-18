@@ -54,8 +54,8 @@
 
 <script>
 import PostList from '@/components/PostList.vue';
+import PageBar from '@/components/PageBar.vue';
 import { formatTime } from '@/utils/timeFormat';
-import PageBar from '@/components/PageBar.vue'
 
 const PAGE_SIZES = [5, 10, 20];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
@@ -130,7 +130,7 @@ export default {
         }
       })
       .catch(error => {
-        console.error('获取帖子列表失败:', error);
+        console.error('getPostList error:', error);
         this.$message.error('获取帖子列表失败');
       });
     },
@@ -143,12 +143,13 @@ export default {
         if (response.code === 1000) {
           this.communityList = response.data;
         } else {
-          console.log("getCommunityList fail:", response.message);
+          this.$message.error(response.message || '获取社区列表失败');
           this.communityList = [];
         }
       })
       .catch(error => {
         console.error("getCommunityList error:", error);
+        this.$message.error('获取社区列表失败');
         this.communityList = [];
       });
     },
@@ -162,11 +163,12 @@ export default {
         if (response.code === 1000) {
           this.getPostList();
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message || '投票失败');
         }
       })
-      .catch((error) => {
-        this.$message.error('votePost error: ' + error);
+      .catch(error => {
+        console.error("votePost error:", error);
+        this.$message.error('投票失败');
       });
     },
     async searchPost() {
@@ -177,7 +179,7 @@ export default {
       }
       
       this.isSearch = true;
-      const response = await this.$axios({
+      this.$axios({
         method: "get",
         url: "/search",
         params: {
@@ -185,13 +187,19 @@ export default {
           size: this.pageSize,
           search: this.keyword
         }
+      })
+      .then(response => {
+        if (response.code === 1000) {
+          this.postList = response.data.list;
+          this.total = response.data.page.total;
+        } else {
+          this.$message.error(response.message || '搜索失败');
+        }
+      })
+      .catch(error => {
+        console.error("searchPost error:", error);
+        this.$message.error('搜索失败');
       });
-      if (response.code === 1000) {
-        this.postList = response.data.list;
-        this.total = response.data.page.total;
-      } else {
-        console.log("searchPost fail:", response.message);
-      }
     },
     viewAllCommunities() {
       this.$router.push('/community/list');

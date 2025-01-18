@@ -51,10 +51,11 @@ export default {
 				if (res.code == 1000) {
           this.$router.push({ name: "Login" });
 				}else{
-          console.log("signup fail:", res.message);
+          this.$message.error(res.message || "注册失败");   
         }
 			}).catch((error) => {
-				console.error("signup error:", error);
+				console.error("submit error:", error);
+        this.$message.error("注册失败");
 			})
 		}
 	}

@@ -147,12 +147,9 @@ export default {
       this.$router.push({ name: "Community", params: { id: id }});
     },
     getPostDetail() {
-      const postId = this.$route.params.id;
-      if (!postId) return;
-
       this.$axios({
         method: "get",
-        url: "/post/" + postId,
+        url: "/post/" + this.$route.params.id,
       })
       .then(response => {
         if (response.code === 1000) {
@@ -169,14 +166,15 @@ export default {
           
           this.checkIsAuthor();
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message || '获取帖子详情失败');
           this.$router.push({ name: "Home" });
         }
       })
       .catch(error => {
-        this.$message.error('getPostDetail error：' + error);
+        console.error("getPostDetail error:", error);
+        this.$message.error('获取帖子详情失败');
         this.$router.push({ name: "Home" });
-      }); 
+      });
     },
     votePost(post_id, direction) {
       this.$axios.post("/vote", {
@@ -188,11 +186,12 @@ export default {
         if (response.code === 1000) {
           this.getPostDetail();
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message || '投票失败');
         }
       })
-      .catch((error) => {
-        this.$message.error('votePost error: ' + error);
+      .catch(error => {
+        console.error("votePost error:", error);
+        this.$message.error('投票失败');
       });
     },
     voteComment(comment_id, direction) {
@@ -201,20 +200,20 @@ export default {
         url: "/vote",
         data: {
           target_id: comment_id,
-          target_type: 2, // 投票目标类型(1:帖子 2:评论)
+          target_type: 2,
           direction: direction,
         }
       })
       .then(response => {
         if (response.code === 1000) {
-          // 更新评论或回复的点赞数
           this.updateCommentVoteNum(comment_id, response.data.vote_num);
         } else {
-          this.$message.error(response.message);
+          this.$message.error(response.message || '评论投票失败');
         }
       })
       .catch(error => {
-        this.$message.error('voteComment error:' + error);
+        console.error("voteComment error:", error);
+        this.$message.error('评论投票失败');
       });
     },
     updateCommentVoteNum(commentId, newVoteNum) {
@@ -317,11 +316,11 @@ export default {
           
           this.$set(comment, 'replies', replies);
         } else {
-          console.error('获取回复列表失败:', response.message);
+          this.$message.error(response.message || '获取回复列表失败');
           this.$set(comment, 'replies', []);
         }
       }).catch(error => {
-        console.error('获取回复列表错误:', error);
+        console.error('getCommentReplies error:', error);   
         this.$set(comment, 'replies', []);
       });
     },

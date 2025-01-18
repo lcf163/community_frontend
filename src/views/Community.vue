@@ -37,10 +37,9 @@
 </template>
   
 <script>
-import Vue from 'vue';
 import PostList from '@/components/PostList.vue';
+import PageBar from '@/components/PageBar.vue';
 import { formatTime } from '@/utils/timeFormat';
-import PageBar from '@/components/PageBar.vue'
 
 const PAGE_SIZES = [5, 10];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
@@ -89,11 +88,12 @@ export default {
 				if (response.code == 1000) {
 					this.community = response.data;
 				} else {
-					console.log("getCommunityDetail fail:", response.message);
+					this.$message.error(response.message || '获取社区详情失败');
 				}
 			})
 			.catch(error => {
 				console.error("getCommunityDetail error:", error);
+				this.$message.error('获取社区详情失败');
 			});
 		},
 		getCommunityPostList() {
@@ -112,11 +112,12 @@ export default {
 					this.postList = response.data.list;
 					this.pageTotal = response.data.page;
 				} else {
-					console.log("getCommunityPostList fail:", response.message);
+					this.$message.error(response.message || '获取帖子列表失败');
 				}
 			})
 			.catch(error => {
 				console.error("getCommunityPostList error:", error);
+				this.$message.error('获取帖子列表失败');
 			});
 		},
 		vote(post_id, direction) {
@@ -133,11 +134,12 @@ export default {
 				if (response.code == 1000) {
 					this.getCommunityPostList();
 				} else {
-					Vue.prototype.$message.error(response.message)
+					this.$message.error(response.message);
 				}
 			})
 			.catch(error => {
 				console.error("vote error:", error);
+				this.$message.error('投票失败');
 			});
 		},
 		goDetail(id) {
