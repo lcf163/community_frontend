@@ -201,7 +201,8 @@ export default {
       })
       .then(response => {
         if (response.code === 1000) {
-          this.getComments();
+          // 更新评论或回复的点赞数
+          this.updateCommentVoteNum(comment_id, response.data.vote_num);
         } else {
           this.$message.error(response.message);
         }
@@ -209,6 +210,27 @@ export default {
       .catch(error => {
         this.$message.error('voteComment error:' + error);
       });
+    },
+    updateCommentVoteNum(commentId, newVoteNum) {
+      // 遍历一级评论
+      const comment = this.comments.find(c => c.comment_id === commentId);
+      if (comment) {
+        // 如果是一级评论，直接更新
+        this.$set(comment, 'vote_num', newVoteNum);
+        return;
+      }
+
+      // 如果是回复，遍历所有评论的回复列表
+      for (const comment of this.comments) {
+        if (comment.replies && comment.replies.length > 0) {
+          const replyIndex = comment.replies.findIndex(r => r.comment_id === commentId);
+          if (replyIndex !== -1) {
+            // 使用 $set 更新特定回复的点赞数
+            this.$set(comment.replies[replyIndex], 'vote_num', newVoteNum);
+            return;
+          }
+        }
+      }
     },
     getComments() {
       const postId = this.$route.params.id;
