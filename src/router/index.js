@@ -10,6 +10,7 @@ import Login from '../views/Login.vue'
 import SignUp from '../views/SignUp.vue'
 import Community from '../views/Community.vue'
 import CommunityList from '../views/CommunityList.vue'
+import UserInfo from '../views/UserInfo.vue'
 
 // 解决 Vue Router 的 push 方法重复点击报错的问题
 const originalPush = VueRouter.prototype.push;
@@ -57,6 +58,11 @@ const routes = [
     path: '/community/:id',
     name: 'Community',
     component: Community
+  },
+  {
+    path: '/user/:id',
+    name: 'UserInfo',
+    component: UserInfo
   },
 ]
 

@@ -2,7 +2,7 @@
   <div class="user-info">
     <img class="avatar" :src="computedAvatarSrc" alt="avatar"/>
     <div class="user-meta">
-      <span class="username">{{ username || '匿名用户' }}</span>
+      <span class="username" @click.stop="goToUserInfo">{{ username || '匿名用户' }}</span>
       <span v-if="time" class="post-time">{{ time }}</span>
     </div>
   </div>
@@ -17,11 +17,25 @@ export default {
     avatarSrc: {
       type: String,
       default: ''
+    },
+    userId: {
+      type: [String, Number],
+      default: ''
     }
   },
   computed: {
     computedAvatarSrc() {
       return this.avatarSrc || require('@/assets/images/avatar.png');
+    }
+  },
+  methods: {
+    goToUserInfo() {
+      if (this.userId) {
+        this.$router.push({ 
+          name: 'UserInfo', 
+          params: { id: this.userId }
+        });
+      }
     }
   }
 }
@@ -53,6 +67,12 @@ export default {
       color: #1a1a1b;
       font-size: 12px;
       font-weight: 600;
+      cursor: pointer;
+      
+      &:hover {
+        color: #0079d3;
+        text-decoration: underline;
+      }
     }
 
     .post-time {

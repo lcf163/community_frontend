@@ -8,6 +8,7 @@
               :username="post.author_name"
               :time="formatTime(post.create_time)"
               :avatar-src="post.avatar_url"
+              :user-id="post.author_id"
             />
             <h4 class="post-title">{{ post.title }}</h4>
           </div>
@@ -54,6 +55,7 @@
         :current-page="pageNumber"
         :page-size="pageSize"
         :total="total"
+        :page-sizes="PAGE_SIZES"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -87,6 +89,9 @@ import CommentDialog from '@/components/CommentDialog.vue';
 import CommentReply from '@/components/CommentReply.vue';
 import PageBar from '@/components/PageBar.vue'
 import { formatTime } from '@/utils/timeFormat';
+
+const PAGE_SIZES = [5, 10];  // 添加常量
+const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];  // 默认使用第一个值
 
 export default {
   name: 'Content',
@@ -128,9 +133,14 @@ export default {
       loading: false,
       activeComment: null,
       pageNumber: 1,
-      pageSize: 5,
+      pageSize: DEFAULT_PAGE_SIZE,  // 修改为使用常量
       total: 0,
     };
+  },
+  computed: {
+    PAGE_SIZES() {  // 添加计算属性
+      return PAGE_SIZES;
+    }
   },
   methods: {
     goCommunityDetail(id) {

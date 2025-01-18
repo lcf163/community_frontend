@@ -23,6 +23,7 @@
         :current-page="pageNumber"
         :page-size="pageSize"
         :total="total"
+        :page-sizes="PAGE_SIZES"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -33,6 +34,9 @@
 <script>
 import PageBar from '@/components/PageBar.vue'
 
+const PAGE_SIZES = [3, 6, 9];
+const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
+
 export default {
   name: 'CommunityList',
   components: {
@@ -42,8 +46,13 @@ export default {
     return {
       communityList: [],
       pageNumber: 1,
-      pageSize: 3,
+      pageSize: DEFAULT_PAGE_SIZE,
       total: 0
+    }
+  },
+  computed: {
+    PAGE_SIZES() {
+      return PAGE_SIZES;
     }
   },
   methods: {

@@ -4,6 +4,7 @@
       <user-avatar
         :username="post.author_name"
         :time="time"
+        :user-id="post.author_id"
         :avatar-src="post.author_avatar ? 
           require(`@/assets/images/avatar/${post.author_avatar}`) : 
           require('@/assets/images/avatar.png')"

@@ -14,6 +14,7 @@
         <user-avatar
           :username="currUsername"
           :avatar-src="computedAvatarSrc"
+          :user-id="userId"
           class="header-user-info"
         />
         <div class="dropdown-content">

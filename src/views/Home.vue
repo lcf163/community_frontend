@@ -29,6 +29,7 @@
           :current-page="pageNumber"
           :page-size="pageSize"
           :total="total"
+          :page-sizes="PAGE_SIZES"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
@@ -56,6 +57,9 @@ import PostList from '@/components/PostList.vue';
 import { formatTime } from '@/utils/timeFormat';
 import PageBar from '@/components/PageBar.vue'
 
+const PAGE_SIZES = [5, 10, 20];
+const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
+
 export default {
   name: "Home",
   components: {
@@ -67,7 +71,7 @@ export default {
       order: "time",
       postList: [],
       pageNumber: 1,
-      pageSize: 10,
+      pageSize: DEFAULT_PAGE_SIZE,
       total: 0,
       keyword: '',
       isSearch: false,
@@ -213,6 +217,9 @@ export default {
     },
     limitedCommunityList() {
       return this.communityList.slice(0, this.maxCommunities);
+    },
+    PAGE_SIZES() {
+      return PAGE_SIZES;
     }
   }
 };

@@ -14,6 +14,7 @@
         <user-avatar
           :username="comment.author_name"
           :time="formatTime(comment.create_time)"
+          :user-id="comment.author_id"
           :avatar-src="comment.author_avatar ? 
             require(`@/assets/images/avatar/${comment.author_avatar}`) : 
             require('@/assets/images/avatar.png')"
@@ -41,6 +42,7 @@
               <user-avatar
                 :username="reply.author_name"
                 :time="formatTime(reply.create_time)"
+                :user-id="reply.author_id"
                 :avatar-src="reply.author_avatar ? 
                   require(`@/assets/images/avatar/${reply.author_avatar}`) : 
                   require('@/assets/images/avatar.png')"

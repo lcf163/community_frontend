@@ -15,6 +15,7 @@
 					:current-page="pageNumber"
 					:page-size="pageSize"
 					:total="pageTotal?.total || 0"
+					:page-sizes="PAGE_SIZES"
 					@size-change="handleSizeChange"
 					@current-change="handleCurrentChange"
 				/>
@@ -41,6 +42,9 @@ import PostList from '@/components/PostList.vue';
 import { formatTime } from '@/utils/timeFormat';
 import PageBar from '@/components/PageBar.vue'
 
+const PAGE_SIZES = [5, 10];
+const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
+
 export default {
 	name: "Community",
 	components: {
@@ -53,8 +57,13 @@ export default {
 			pageTotal: {},
 			community: {},
 			pageNumber: 1,
-			pageSize: 5,
+			pageSize: DEFAULT_PAGE_SIZE,
 			userId: ''
+		}
+	},
+	computed: {
+		PAGE_SIZES() {
+			return PAGE_SIZES;
 		}
 	},
 	mounted() {
