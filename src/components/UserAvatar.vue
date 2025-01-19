@@ -2,13 +2,15 @@
   <div class="user-info">
     <img class="avatar" :src="computedAvatarSrc" alt="avatar"/>
     <div class="user-meta">
-      <span class="username" @click.stop="goToUserInfo">{{ username || '匿名用户' }}</span>
+      <span class="username" @click.stop="handleUsernameClick">{{ username || '匿名用户' }}</span>
       <span v-if="time" class="post-time">{{ time }}</span>
     </div>
   </div>
 </template>
 
 <script>
+import { getAvatarUrl } from '@/config/api';
+
 export default {
   name: 'UserAvatar',
   props: {
@@ -21,15 +23,22 @@ export default {
     userId: {
       type: [String, Number],
       default: ''
+    },
+    disableLink: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
     computedAvatarSrc() {
-      return this.avatarSrc || require('@/assets/images/avatar.png');
+      return getAvatarUrl(this.avatarSrc);
     }
   },
   methods: {
-    goToUserInfo() {
+    handleUsernameClick() {
+      if (this.disableLink) {
+        return;
+      }
       if (this.userId) {
         this.$router.push({ 
           name: 'UserInfo', 

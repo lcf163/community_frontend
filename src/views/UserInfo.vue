@@ -2,7 +2,7 @@
   <div class="content">
     <div class="user-info">
       <div class="user-header">
-        <img :src="userInfo.avatar_url" class="avatar" alt="用户头像">
+        <img :src="userInfo.avatar" class="avatar" alt="用户头像">
         <div class="user-details">
           <h2 class="username">{{ userInfo.username }}</h2>
           <p class="user-id">ID: {{ userInfo.user_id }}</p>
@@ -41,6 +41,7 @@
 import PostList from '@/components/PostList.vue';
 import PageBar from '@/components/PageBar.vue';
 import { formatTime } from '@/utils/timeFormat';
+import { getAvatarUrl } from '@/config/api'
 
 const PAGE_SIZES = [5, 10];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];  // 默认使用第一个值
@@ -56,7 +57,7 @@ export default {
       userInfo: {
         user_id: '',
         username: '',
-        avatar_url: require('@/assets/images/avatar.png')
+        avatar: ''
       },
       postList: [],
       pageNumber: 1,
@@ -79,15 +80,7 @@ export default {
       })
       .then(response => {
         if (response.code === 1000) {
-          // 处理头像路径
-          const avatarUrl = response.data.avatar ? 
-            require(`@/assets/images/avatar/${response.data.avatar}`) : 
-            require('@/assets/images/avatar.png');
-          
-          this.userInfo = {
-            ...response.data,
-            avatar_url: avatarUrl
-          };
+          this.userInfo = response.data;
         } else {
           this.$message.error(response.message || '获取用户信息失败');
         }
@@ -165,7 +158,8 @@ export default {
         this.getUserPosts();
       }
     },
-    formatTime
+    formatTime,
+    getAvatarUrl
   },
   mounted() {
     this.getUserInfo();

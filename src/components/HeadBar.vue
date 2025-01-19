@@ -13,11 +13,13 @@
       <div class="user-box" v-show="isLogin">
         <user-avatar
           :username="currUsername"
-          :avatar-src="computedAvatarSrc"
+          :avatar-src="currAvatar"
           :user-id="userId"
+          :disable-link="true"
           class="header-user-info"
         />
         <div class="dropdown-content">
+          <a @click="goToUserInfo">个人主页</a>
           <a @click="goLogout">登出</a>
         </div>
       </div>
@@ -43,9 +45,8 @@ export default {
     userId() {
       return this.$store.getters.userID;
     },
-    computedAvatarSrc() {
-      const avatar = this.$store.getters.avatar;
-      return avatar ? require(`@/assets/images/avatar/${avatar}`) : require('@/assets/images/avatar.png');
+    currAvatar() {
+      return this.$store.getters.avatar;
     }
   },
   created() {
@@ -67,6 +68,14 @@ export default {
     goLogout() {
       this.$store.commit("logout");
       this.$router.push({ name: "Login" });
+    },
+    goToUserInfo() {
+      if (this.userId) {
+        this.$router.push({ 
+          name: 'UserInfo', 
+          params: { id: this.userId }
+        });
+      }
     }
   }
 }

@@ -15,9 +15,7 @@
           :username="comment.author_name"
           :time="formatTime(comment.create_time)"
           :user-id="comment.author_id"
-          :avatar-src="comment.author_avatar ? 
-            require(`@/assets/images/avatar/${comment.author_avatar}`) : 
-            require('@/assets/images/avatar.png')"
+          :avatar-src="comment.author_avatar"
         />
         <div class="c-right">
           <div class="c-content">{{ comment.content }}</div>
@@ -43,9 +41,7 @@
                 :username="reply.author_name"
                 :time="formatTime(reply.create_time)"
                 :user-id="reply.author_id"
-                :avatar-src="reply.author_avatar ? 
-                  require(`@/assets/images/avatar/${reply.author_avatar}`) : 
-                  require('@/assets/images/avatar.png')"
+                :avatar-src="reply.author_avatar"
               />
               <div class="reply-content">
                 <span class="reply-to">回复 @{{ reply.reply_to_name }}：</span>

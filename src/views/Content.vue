@@ -89,6 +89,7 @@ import CommentDialog from '@/components/CommentDialog.vue';
 import CommentReply from '@/components/CommentReply.vue';
 import PageBar from '@/components/PageBar.vue'
 import { formatTime } from '@/utils/timeFormat';
+import { getAvatarUrl } from '@/config/api';
 
 const PAGE_SIZES = [5, 10];  // 添加常量
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];  // 默认使用第一个值
@@ -153,17 +154,10 @@ export default {
       })
       .then(response => {
         if (response.code === 1000) {
-          // 处理头像路径
-          const avatarUrl = response.data.author_avatar ? 
-            require(`@/assets/images/avatar/${response.data.author_avatar}`) : 
-            require('@/assets/images/avatar.png');
-          
-          // 合并数据，直接使用后端返回的作者信息
           this.post = {
             ...response.data,
-            avatar_url: avatarUrl
+            avatar_url: getAvatarUrl(response.data.author_avatar)
           };
-          
           this.checkIsAuthor();
         } else {
           this.$message.error(response.message || '获取帖子详情失败');
@@ -251,21 +245,12 @@ export default {
       })
       .then(response => {
         if (response.code === 1000 && response.data) {
-          // 直接使用 total 值
           this.total = response.data.page.total;
-          
-          // 处理评论列表
           const commentList = response.data.list || [];
           const comments = commentList.map(comment => {
-            // 处理头像路径
-            const avatarUrl = comment.author_avatar ? 
-              require(`@/assets/images/avatar/${comment.author_avatar}`) : 
-              require('@/assets/images/avatar.png');
-            
-            // 为每个评论添加响应式属性
+            // 移除本地头像处理逻辑，直接使用后端返回的头像URL
             this.$set(comment, 'showReplyInput', false);
             this.$set(comment, 'replies', []);
-            this.$set(comment, 'avatar_src', avatarUrl);
             
             // 如果评论有回复数量且大于0，获取回复列表
             if (comment.reply_count && comment.reply_count > 0) {
@@ -295,22 +280,9 @@ export default {
         url: `/comment/reply/${comment.comment_id}`,
       }).then(response => {
         if (response.code === 1000 && Array.isArray(response.data)) {
-          // 处理回复列表，添加头像路径
           const replies = response.data.map(reply => {
-            // 处理头像路径
-            const avatarUrl = reply.author_avatar ? 
-              require(`@/assets/images/avatar/${reply.author_avatar}`) : 
-              require('@/assets/images/avatar.png');
-            
-            // 添加显示回复输入框的标志和头像路径
             this.$set(reply, 'showReplyInput', false);
-            this.$set(reply, 'avatar_src', avatarUrl);
-            
-            // 确保回复目标用户信息有效
-            if (!reply.reply_to_name) {
-              reply.reply_to_name = reply.reply_to_user || comment.author_name;
-            }
-            
+            this.$set(reply, 'author_avatar', reply.author_avatar);
             return reply;
           });
           

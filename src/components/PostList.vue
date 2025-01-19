@@ -5,9 +5,7 @@
         :username="post.author_name"
         :time="time"
         :user-id="post.author_id"
-        :avatar-src="post.author_avatar ? 
-          require(`@/assets/images/avatar/${post.author_avatar}`) : 
-          require('@/assets/images/avatar.png')"
+        :avatar-src="post.author_avatar"
       />
       <h4 class="post-title">{{ post.title }}</h4>
       <div class="post-content">
