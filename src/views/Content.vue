@@ -23,13 +23,15 @@
               :is-author="isAuthor"
               @vote="votePost(post.post_id, $event)"
             />
-            <el-button 
-              v-if="isAuthor" 
-              type="text" 
-              class="edit-btn"
-              @click="showEditDialog">
-              <i class="el-icon-edit"></i> 编辑
-            </el-button>
+            <div class="post-actions">
+              <el-button 
+                v-if="isAuthor" 
+                type="text" 
+                class="edit-btn"
+                @click="showEditDialog">
+                <i class="el-icon-edit"></i> 编辑帖子
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
@@ -359,7 +361,10 @@ export default {
     },
     checkIsAuthor() {
       const userId = this.$store.getters.userID;
-      this.isAuthor = userId && userId === this.post.author_id;
+      console.log('Current userID:', userId);
+      console.log('Post author_id:', this.post.author_id);
+      // 确保类型一致的比较
+      this.isAuthor = userId && String(userId) === String(this.post.author_id);
     },
     // 显示回复输入框
     showReplyInput(comment, parentComment = null) {
@@ -443,7 +448,8 @@ export default {
       handler() {
         this.checkIsAuthor();
       },
-      immediate: true
+      immediate: true,
+      deep: true
     }
   },
   mounted() {
@@ -788,11 +794,32 @@ export default {
         }
 
         .post-bottom {
-          display: flex; /* 使用 flexbox 布局 */
-          justify-content: space-between; /* 在两端对齐 */
-          align-items: center; /* 垂直居中对齐 */
-          padding: 10px; /* 添加内边距 */
-          border: none; /* 去掉边框 */
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 16px;
+          border-top: 1px solid #edeff1;
+          
+          .post-actions {
+            display: flex;
+            align-items: center;
+            
+            .edit-btn {
+              padding: 6px 12px;
+              color: #878A8C;
+              font-size: 14px;
+              
+              &:hover {
+                color: #1A1A1B;
+                background-color: rgba(26,26,27,0.1);
+                border-radius: 4px;
+              }
+              
+              .el-icon-edit {
+                margin-right: 4px;
+              }
+            }
+          }
         }
 
         .user-btn {
