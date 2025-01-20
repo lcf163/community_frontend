@@ -179,8 +179,15 @@ export default {
       });
     },
     votePost(post_id, direction) {
+      // post_id 可能来自 URL 参数、DOM事件等，默认都是字符串
+      const numericPostId = parseInt(post_id, 10);
+      if (isNaN(numericPostId)) {
+        this.$message.error('无效的帖子ID');
+        return;
+      }
+
       this.$axios.post("/vote", {
-        target_id: post_id,
+        target_id: numericPostId, // 确保是数字类型
         target_type: 1,
         direction: direction
       })
@@ -197,11 +204,18 @@ export default {
       });
     },
     voteComment(comment_id, direction) {
+      // 确保 comment_id 是数字类型
+      const numericCommentId = parseInt(comment_id, 10);
+      if (isNaN(numericCommentId)) {
+        this.$message.error('无效的评论ID');
+        return;
+      }
+
       this.$axios({
         method: "post",
         url: "/vote",
         data: {
-          target_id: comment_id,
+          target_id: numericCommentId, // 确保是数字类型
           target_type: 2,
           direction: direction,
         }
@@ -339,15 +353,22 @@ export default {
       this.editForm = {
         title: this.post.title,
         content: this.post.content
-      }
-      this.editDialogVisible = true
+      };
+      this.editDialogVisible = true;
     },
     submitEdit(formData) {
+      // 确保 post_id 是数字类型
+      const numericPostId = parseInt(this.post.post_id, 10);
+      if (isNaN(numericPostId)) {
+        this.$message.error('无效的帖子ID');
+        return;
+      }
+
       this.$axios({
         method: 'put',
         url: "/post",
         data: {
-          post_id: this.post.post_id,
+          post_id: numericPostId, // 确保发送的是数字类型
           title: formData.title,
           content: formData.content
         }
@@ -358,12 +379,13 @@ export default {
           this.editDialogVisible = false
           this.getPostDetail()
         } else {
-          this.$message.error(response.message)
+          this.$message.error(response.message || '修改失败')
         }
       })
-      .catch(() => {
+      .catch(error => {
+        console.error('editPost error:', error);
         this.$message.error('修改失败')
-      })
+      });
     },
     checkIsAuthor() {
       const userId = this.$store.getters.userID;

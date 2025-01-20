@@ -154,8 +154,14 @@ export default {
       });
     },
     votePost(post_id, direction) {
+      const numericPostId = parseInt(post_id, 10);
+      if (isNaN(numericPostId)) {
+        this.$message.error('无效的帖子ID');
+        return;
+      }
+
       this.$axios.post("/vote", {
-        target_id: post_id,
+        target_id: numericPostId,
         target_type: 1,
         direction: direction
       })
@@ -209,7 +215,7 @@ export default {
     },
     formatTime,
     handleVote({ postId, type }) {
-      this.votePost(postId, type)
+      this.votePost(postId, type);
     }
   },
   mounted() {

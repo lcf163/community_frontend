@@ -12,26 +12,28 @@
 
     <div class="user-posts">
       <h3 class="section-title">发布的帖子</h3>
-      <ul class="post-list">
-        <li v-for="post in postList" :key="post.post_id" class="post-item">
-          <post-list
-            :post="post"
-            :time="formatTime(post.create_time)"
-            :is-author="true"
-            @vote="handleVote"
-            @detail="goDetail"
+      <div class="post-list">
+        <ul class="post-items">
+          <li v-for="post in postList" :key="post.post_id" class="post-item">
+            <post-list
+              :post="post"
+              :time="formatTime(post.create_time)"
+              :is-author="post.author_id === userId"
+              @vote="handleVote"
+              @detail="goDetail"
+            />
+          </li>
+        </ul>
+        <div class="pagination-block">
+          <page-bar
+            :current-page="pageNumber"
+            :page-size="pageSize"
+            :total="total"
+            :page-sizes="PAGE_SIZES"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
           />
-        </li>
-      </ul>
-      <div class="pagination-block">
-        <page-bar
-          :current-page="pageNumber"
-          :page-size="pageSize"
-          :total="total"
-          :page-sizes="PAGE_SIZES"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+        </div>
       </div>
     </div>
   </div>
@@ -62,7 +64,8 @@ export default {
       postList: [],
       pageNumber: 1,
       pageSize: DEFAULT_PAGE_SIZE,  // 使用常量
-      total: 0
+      total: 0,
+      userId: ''
     };
   },
   computed: {
@@ -81,6 +84,7 @@ export default {
       .then(response => {
         if (response.code === 1000) {
           this.userInfo = response.data;
+          this.userId = userId;
         } else {
           this.$message.error(response.message || '获取用户信息失败');
         }
@@ -122,11 +126,18 @@ export default {
         this.$message.error('获取用户帖子失败');
       });
     },
-    handleVote(postId, direction) {
+    handleVote({ postId, type }) {
+      // 直接使用 postId 和 type
+      const numericPostId = parseInt(postId, 10);
+      if (isNaN(numericPostId)) {
+        this.$message.error('无效的帖子ID');
+        return;
+      }
+
       this.$axios.post('/vote', {
-        target_id: postId,
+        target_id: numericPostId,
         target_type: 1,
-        direction: direction
+        direction: type
       })
       .then(response => {
         if (response.code === 1000) {
@@ -231,21 +242,24 @@ export default {
     }
 
     .post-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+      .post-items {
+        list-style: none;
+        padding: 0;
+        margin: 0;
 
-      .post-item {
-        margin-bottom: 20px;
+        .post-item {
+          margin-bottom: 20px;
+          list-style-type: none;
+        }
       }
-    }
 
-    .pagination-block {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-      padding: 16px 0 0;
-      border-top: 1px solid #eee;
+      .pagination-block {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        padding: 16px 0 0;
+        border-top: 1px solid #eee;
+      }
     }
   }
 }

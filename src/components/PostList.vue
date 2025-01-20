@@ -17,7 +17,7 @@
       :time="time"
       :vote-num="post.vote_num"
       :is-author="isAuthor"
-      @vote="onVote"
+      @vote="handleVote"
       @edit="goDetail(post.post_id)"
     />
   </div>
@@ -51,8 +51,15 @@ export default {
     goDetail(postId) {
       this.$emit('detail', postId)
     },
-    onVote(type) {
-      this.$emit('vote', { postId: this.post.post_id, type })
+    handleVote(type) {
+      // 确保 post_id 是数字类型
+      const postId = parseInt(this.post.post_id, 10);
+      
+      // 发送一个对象作为事件参数
+      this.$emit('vote', {
+        postId: postId,
+        type: type
+      });
     }
   }
 }

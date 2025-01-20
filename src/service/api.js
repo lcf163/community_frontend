@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 axios.defaults.baseURL = "/api/v1/";
 axios.interceptors.request.use((config) => {

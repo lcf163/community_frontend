@@ -120,28 +120,6 @@ export default {
 				this.$message.error('获取帖子列表失败');
 			});
 		},
-		vote(post_id, direction) {
-			this.$axios({
-				method: "post",
-				url: "/vote",
-				data: {
-					target_id: post_id,
-					target_type: 1,
-					direction: direction,
-				}
-			})
-			.then(response => {
-				if (response.code == 1000) {
-					this.getCommunityPostList();
-				} else {
-					this.$message.error(response.message);
-				}
-			})
-			.catch(error => {
-				console.error("vote error:", error);
-				this.$message.error('投票失败');
-			});
-		},
 		goDetail(id) {
 			this.$router.push({ name: "Content", params: { id: id } });
 		},
@@ -156,7 +134,33 @@ export default {
 		},
 		formatTime,
 		handleVote({ postId, type }) {
-			this.vote(postId, type);
+			// 确保 postId 是数字类型
+			const numericPostId = parseInt(postId, 10);
+			if (isNaN(numericPostId)) {
+				this.$message.error('无效的帖子ID');
+				return;
+			}
+
+			this.$axios({
+				method: "post",
+				url: "/vote",
+				data: {
+					target_id: numericPostId,
+					target_type: 1,
+					direction: type
+				}
+			})
+			.then(response => {
+				if (response.code == 1000) {
+					this.getCommunityPostList();
+				} else {
+					this.$message.error(response.message || '投票失败');
+				}
+			})
+			.catch(error => {
+				console.error("vote error:", error);
+				this.$message.error('投票失败');
+			});
 		}
 	}
 };
