@@ -13,7 +13,7 @@
             <h4 class="post-title">{{ post.title }}</h4>
           </div>
           <div class="post-body">
-            <div class="post-content">{{ post.content }}</div>
+            <div class="post-content markdown-body" v-html="parsedContent"></div>
           </div>
           <div class="post-bottom">
             <vote-info-bar
@@ -92,6 +92,9 @@ import CommentReply from '@/components/CommentReply.vue';
 import PageBar from '@/components/PageBar.vue'
 import { formatTime } from '@/utils/timeFormat';
 import { getAvatarUrl } from '@/config/api';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github.css'; // 使用 GitHub 风格的代码高亮主题
 
 const PAGE_SIZES = [5, 10];  // 添加常量
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];  // 默认使用第一个值
@@ -143,6 +146,9 @@ export default {
   computed: {
     PAGE_SIZES() {  // 添加计算属性
       return PAGE_SIZES;
+    },
+    parsedContent() {
+      return this.post.content ? marked(this.post.content) : '';
     }
   },
   methods: {
@@ -455,6 +461,18 @@ export default {
   mounted() {
     this.getPostDetail();
     this.getComments();
+  },
+  created() {
+    // 配置 marked 的代码高亮选项
+    marked.setOptions({
+      highlight: function(code, lang) {
+        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+        return hljs.highlight(code, { language }).value;
+      },
+      langPrefix: 'hljs language-', // 添加类名前缀
+      breaks: true,
+      gfm: true
+    });
   },
 };
 </script>
@@ -780,16 +798,102 @@ export default {
           min-height: 100px;
           
           .post-content {
-            font-family: Noto Sans, Arial, sans-serif;
-            font-size: 16px;
-            font-weight: 400;
+            padding: 15px;
+            font-size: 14px;
             line-height: 1.6;
-            color: #1a1a1b;
-            white-space: pre-wrap;
             word-break: break-word;
-            overflow-wrap: break-word;
-            padding: 0;
-            margin: 0;
+            
+            :deep(.markdown-body) {
+              h1, h2, h3, h4, h5, h6 {
+                margin-top: 24px;
+                margin-bottom: 16px;
+                font-weight: 600;
+                line-height: 1.25;
+              }
+              
+              h1 { font-size: 2em; }
+              h2 { font-size: 1.5em; }
+              h3 { font-size: 1.25em; }
+              
+              p {
+                margin-bottom: 16px;
+              }
+              
+              code {
+                padding: 0.2em 0.4em;
+                margin: 0;
+                font-size: 85%;
+                background-color: rgba(27,31,35,0.05);
+                border-radius: 3px;
+              }
+              
+              pre {
+                margin: 16px 0;
+                padding: 16px;
+                overflow: auto;
+                background-color: #f6f8fa;
+                border-radius: 6px;
+                
+                code {
+                  padding: 0;
+                  margin: 0;
+                  font-size: 85%;
+                  background-color: transparent;
+                  border-radius: 0;
+                  white-space: pre;
+                  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+                }
+              }
+              
+              blockquote {
+                padding: 0 1em;
+                color: #6a737d;
+                border-left: 0.25em solid #dfe2e5;
+                margin: 0 0 16px;
+              }
+              
+              ul, ol {
+                padding-left: 2em;
+                margin-bottom: 16px;
+              }
+              
+              img {
+                max-width: 100%;
+                box-sizing: border-box;
+              }
+              
+              a {
+                color: #0366d6;
+                text-decoration: none;
+                
+                &:hover {
+                  text-decoration: underline;
+                }
+              }
+              
+              table {
+                border-spacing: 0;
+                border-collapse: collapse;
+                margin-bottom: 16px;
+                
+                th, td {
+                  padding: 6px 13px;
+                  border: 1px solid #dfe2e5;
+                }
+                
+                tr:nth-child(2n) {
+                  background-color: #f6f8fa;
+                }
+              }
+              
+              .hljs {
+                display: block;
+                overflow-x: auto;
+                padding: 0.5em;
+                color: #333;
+                background: #f8f8f8;
+              }
+            }
           }
         }
 

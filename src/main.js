@@ -6,9 +6,41 @@ import App from './App.vue' // 主应用组件
 import router from './router' // 路由配置
 import store from './store' // Vuex 状态管理
 import axios from './service/api' // Axios API 服务
+import { marked } from 'marked' // 添加 marked 导入
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
+
+// 配置 marked 选项
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+// 将 marked 添加到 Vue 原型上
+Vue.prototype.$marked = marked;
 
 // 将 Axios 实例挂载到 Vue 原型上，方便在组件中使用
 Vue.prototype.$axios = axios;
+
+// 配置 highlight.js
+hljs.configure({
+  ignoreUnescapedHTML: true
+});
+
+// 注册常用的编程语言
+import cpp from 'highlight.js/lib/languages/cpp'
+import javascript from 'highlight.js/lib/languages/javascript'
+import python from 'highlight.js/lib/languages/python'
+import java from 'highlight.js/lib/languages/java'
+import xml from 'highlight.js/lib/languages/xml'
+import bash from 'highlight.js/lib/languages/bash'
+
+hljs.registerLanguage('cpp', cpp)
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('python', python)
+hljs.registerLanguage('java', java)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('bash', bash)
 
 // 关闭 Vue 的生产提示
 Vue.config.productionTip = false
