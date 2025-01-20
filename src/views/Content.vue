@@ -361,8 +361,8 @@ export default {
     },
     checkIsAuthor() {
       const userId = this.$store.getters.userID;
-      console.log('Current userID:', userId);
-      console.log('Post author_id:', this.post.author_id);
+      // console.log('Current userID:', userId);
+      // console.log('Post author_id:', this.post.author_id);
       // 确保类型一致的比较
       this.isAuthor = userId && String(userId) === String(this.post.author_id);
     },
