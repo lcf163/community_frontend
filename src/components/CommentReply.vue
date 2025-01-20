@@ -30,13 +30,17 @@
               :author="comment.author_name"
               :time="formatTime(comment.create_time)"
               :vote-num="comment.vote_num"
-              @vote="$emit('vote-comment', comment.comment_id, $event)"
+              @vote="handleVote(comment.comment_id, $event)"
             />
           </div>
-
+          
           <!-- 回复列表 -->
           <div v-if="comment.replies && comment.replies.length > 0" class="reply-list">
-            <div v-for="reply in comment.replies" :key="reply.reply_id" class="reply-item">
+            <!-- 显示限制数量的回复 -->
+            <div v-for="(reply, index) in limitedReplies(comment)" 
+                 :key="reply.comment_id" 
+                 class="reply-item"
+                 :class="{ 'hidden': index >= replyLimit && !comment.showAllReplies }">
               <user-avatar
                 :username="reply.author_name"
                 :time="formatTime(reply.create_time)"
@@ -44,51 +48,32 @@
                 :avatar-src="reply.author_avatar"
               />
               <div class="reply-content">
-                <span class="reply-to">回复 @{{ reply.reply_to_name }}：</span>
-                {{ reply.content }}
-              </div>
-              <div class="reply-actions">
-                <div class="action-left">
+                <div class="reply-text">{{ reply.content }}</div>
+                <div class="reply-actions">
                   <el-button 
                     type="text" 
                     class="reply-btn"
                     @click.stop="$emit('show-reply', reply, comment)">
                     回复
                   </el-button>
-                </div>
-                <div class="action-right">
                   <vote-info-bar
                     :author="reply.author_name"
                     :time="formatTime(reply.create_time)"
                     :vote-num="reply.vote_num"
-                    @vote="$emit('vote-comment', reply.comment_id, $event)"
+                    @vote="handleVote(reply.comment_id, $event)"
                   />
                 </div>
               </div>
-              <!-- 二级回复的回复框 -->
-              <div v-if="reply.showReplyInput" class="reply-input nested">
-                <comment-dialog
-                  type="comment"
-                  :visible.sync="reply.showReplyInput"
-                  :submitting="submitting"
-                  :placeholder="`回复 @${reply.author_name}：`"
-                  @submit="submitReply($event, reply)"
-                  @cancel="cancelReply(reply)"
-                />
-              </div>
             </div>
-          </div>
-
-          <!-- 一级评论的回复框 -->
-          <div v-if="comment.showReplyInput" class="reply-input">
-            <comment-dialog
-              type="comment"
-              :visible.sync="comment.showReplyInput"
-              :submitting="submitting"
-              :placeholder="`回复 @${comment.author_name}：`"
-              @submit="submitReply($event, comment)"
-              @cancel="cancelReply(comment)"
-            />
+            
+            <!-- 展开/收起按钮 -->
+            <div v-if="comment.replies.length > replyLimit" class="expand-btn">
+              <el-button 
+                type="text"
+                @click="toggleReplies(comment)">
+                {{ comment.showAllReplies ? '收起回复' : `展开其他 ${comment.replies.length - replyLimit} 条回复` }}
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
@@ -99,7 +84,6 @@
 <script>
 import UserAvatar from './UserAvatar.vue'
 import VoteInfoBar from './VoteInfoBar.vue';
-import CommentDialog from './CommentDialog.vue';
 import { formatTime } from '@/utils/timeFormat';
 
 export default {
@@ -107,7 +91,6 @@ export default {
   components: {
     UserAvatar,
     VoteInfoBar,
-    CommentDialog
   },
   props: {
     comments: {
@@ -123,6 +106,11 @@ export default {
       default: false
     }
   },
+  data() {
+    return {
+      replyLimit: 3, // 默认显示的回复数量
+    }
+  },
   methods: {
     formatTime,
     showReplyInput(comment, parentComment = null) {
@@ -135,6 +123,15 @@ export default {
       this.$emit('submit-reply', formData, comment);
     },
     voteComment(commentId, direction) {
+      this.$emit('vote-comment', commentId, direction);
+    },
+    limitedReplies(comment) {
+      return comment.showAllReplies ? comment.replies : comment.replies.slice(0, this.replyLimit);
+    },
+    toggleReplies(comment) {
+      this.$set(comment, 'showAllReplies', !comment.showAllReplies);
+    },
+    handleVote(commentId, direction) {
       this.$emit('vote-comment', commentId, direction);
     }
   }
@@ -199,19 +196,46 @@ export default {
     }
 
     .reply-list {
-      margin-left: 24px;
-      margin-top: 8px;
+      margin-left: 20px;
+      margin-top: 10px;
       
       .reply-item {
+        padding: 8px;
+        border-left: 2px solid #e6e6e6;
         margin-bottom: 8px;
         
+        &.hidden {
+          display: none;
+        }
+        
         .reply-content {
-          margin-left: 8px;
-          font-size: 14px;
+          margin-left: 10px;
           
-          .reply-to {
-            color: #0079d3;
-            font-weight: 600;
+          .reply-text {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 5px;
+          }
+          
+          .reply-actions {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #8c8c8c;
+          }
+        }
+      }
+      
+      .expand-btn {
+        text-align: center;
+        margin-top: 8px;
+        
+        .el-button {
+          font-size: 13px;
+          color: #8c8c8c;
+          
+          &:hover {
+            color: #409EFF;
           }
         }
       }
