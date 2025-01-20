@@ -324,29 +324,37 @@ export default {
     submitComment(formData) {
       if (!formData.content.trim()) return
       this.submitting = true
+      
+      // 确保 post_id 是数字类型
+      const numericPostId = parseInt(this.post.post_id, 10);
+      if (isNaN(numericPostId)) {
+        this.$message.error('无效的帖子ID');
+        return;
+      }
+
       this.$axios({
         method: 'post',
         url: '/comment',
         data: {
-          post_id: this.post.post_id,
+          post_id: numericPostId,  // 使用数字类型的 ID
           content: formData.content
         }
       })
-        .then(response => {
-          if (response.code === 1000) {
-            this.$message.success('评论成功')
-            this.getComments()
-            this.showCommentInput = true
-          } else {
-            this.$message.error(response.message)
-          }
-        })
-        .catch(() => {
-          this.$message.error('评论失败')
-        })
-        .finally(() => {
-          this.submitting = false
-        })
+      .then(response => {
+        if (response.code === 1000) {
+          this.$message.success('评论成功')
+          this.getComments()
+          this.showCommentInput = false  // 修正：评论成功后关闭输入框
+        } else {
+          this.$message.error(response.message)
+        }
+      })
+      .catch(() => {
+        this.$message.error('评论失败')
+      })
+      .finally(() => {
+        this.submitting = false
+      })
     },
     formatTime,
     showEditDialog() {
@@ -427,13 +435,23 @@ export default {
     submitReply(formData, comment) {
       if (!formData.content.trim()) return;
       
-      // 判断是否是二级回复
       const parentComment = comment.parentComment || comment;
+      
+      // 确保所有 ID 都是数字类型
+      const numericPostId = parseInt(this.post.post_id, 10);
+      const numericParentId = parseInt(parentComment.comment_id, 10);
+      const numericReplyToUid = parseInt(comment.author_id, 10);
+      
+      if (isNaN(numericPostId) || isNaN(numericParentId) || isNaN(numericReplyToUid)) {
+        this.$message.error('无效的ID参数');
+        return;
+      }
+
       const replyData = {
-        post_id: this.post.post_id,
-        parent_id: parentComment.comment_id,
+        post_id: numericPostId,
+        parent_id: numericParentId,
         content: formData.content,
-        reply_to_uid: comment.author_id,
+        reply_to_uid: numericReplyToUid,
         reply_to_name: comment.author_name
       };
 
