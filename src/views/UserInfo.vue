@@ -2,10 +2,29 @@
   <div class="content">
     <div class="user-info">
       <div class="user-header">
-        <img :src="userInfo.avatar" class="avatar" alt="用户头像">
+        <img :src="getAvatarUrl(userInfo.avatar)" class="avatar" alt="用户头像">
         <div class="user-details">
           <h2 class="username">{{ userInfo.username }}</h2>
           <p class="user-id">ID: {{ userInfo.user_id }}</p>
+          
+          <div class="edit-buttons" v-if="isCurrentUser">
+            <input
+              type="file"
+              ref="avatarInput"
+              style="display: none"
+              accept="image/*"
+              @change="handleAvatarUpload"
+            />
+            <el-button size="small" @click="$refs.avatarInput.click()">
+              修改头像
+            </el-button>
+            <el-button size="small" @click="showEditDialog('name')">
+              修改用户名
+            </el-button>
+            <el-button size="small" @click="showEditDialog('password')">
+              修改密码
+            </el-button>
+          </div>
         </div>
       </div>
     </div>
@@ -36,6 +55,51 @@
         </div>
       </div>
     </div>
+
+    <el-dialog
+      :title="editType === 'username' ? '修改用户名' : '修改密码'"
+      :visible="editDialogVisible"
+      @close="editDialogVisible = false"
+    >
+      <el-form :model="formData" :rules="rules" ref="form">
+        <template v-if="editType === 'name'">
+          <el-form-item label="新用户名" prop="newName">
+            <el-input v-model="formData.newName" placeholder="请输入新用户名"></el-input>
+          </el-form-item>
+        </template>
+        
+        <template v-else-if="editType === 'password'">
+          <el-form-item label="旧密码" prop="oldPassword">
+            <el-input
+              v-model="formData.oldPassword"
+              type="password"
+              show-password
+              placeholder="请输入旧密码">
+            </el-input>
+          </el-form-item>
+          <el-form-item label="新密码" prop="newPassword">
+            <el-input
+              v-model="formData.newPassword"
+              type="password"
+              show-password
+              placeholder="请输入新密码">
+            </el-input>
+          </el-form-item>
+          <el-form-item label="确认密码" prop="confirmPassword">
+            <el-input
+              v-model="formData.confirmPassword"
+              type="password"
+              show-password
+              placeholder="请确认新密码">
+            </el-input>
+          </el-form-item>
+        </template>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit">提交</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -65,12 +129,51 @@ export default {
       pageNumber: 1,
       pageSize: DEFAULT_PAGE_SIZE,  // 使用常量
       total: 0,
-      userId: ''
+      userId: '',
+      editDialogVisible: false,
+      editType: '', // 'name', 'password', 'avatar'
+      formData: {
+        newName: '',
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      },
+      avatarFile: null,
+      rules: {
+        newName: [
+          { required: true, message: '请输入新用户名', trigger: 'blur' },
+          { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+        ],
+        oldPassword: [
+          { required: true, message: '请输入原密码', trigger: 'blur' },
+          { min: 1, message: '密码长度不能为空', trigger: 'blur' }
+        ],
+        newPassword: [
+          { required: true, message: '请输入新密码', trigger: 'blur' },
+          { min: 6, message: '密码长度不能小于6位', trigger: 'blur' }
+        ],
+        confirmPassword: [
+          { required: true, message: '请确认新密码', trigger: 'blur' },
+          { 
+            validator: (rule, value, callback) => {
+              if (value !== this.formData.newPassword) {
+                callback(new Error('两次输入的密码不一致'));
+              } else {
+                callback();
+              }
+            }, 
+            trigger: 'blur'
+          }
+        ]
+      }
     };
   },
   computed: {
     PAGE_SIZES() {  // 添加计算属性以在模板中使用常量
       return PAGE_SIZES;
+    },
+    isCurrentUser() {
+      return this.$store.getters.userID === this.userId;
     }
   },
   methods: {
@@ -170,7 +273,126 @@ export default {
       }
     },
     formatTime,
-    getAvatarUrl
+    getAvatarUrl,
+    // 显示编辑对话框
+    showEditDialog(type) {
+      this.editType = type;
+      this.editDialogVisible = true;
+      this.formData = {
+        newName: '',
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      };
+      // 重置表单验证
+      if (this.$refs.form) {
+        this.$refs.form.clearValidate();
+      }
+    },
+    // 处理头像上传
+    handleAvatarUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const isImage = /^image\/(jpeg|png|gif)$/.test(file.type);
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isImage) {
+        this.$message.error('只能上传图片文件!');
+        return;
+      }
+      if (!isLt2M) {
+        this.$message.error('图片大小不能超过 2MB!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      this.$axios({
+        method: 'post',
+        url: '/user/avatar',
+        data: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      .then(response => {
+        if (response.code === 1000) {
+          this.$message.success('头像更新成功');
+          this.getUserInfo();
+          // 更新 Vuex store 中的用户信息
+          this.$store.dispatch('getUserInfo');
+        } else {
+          this.$message.error(response.message || '头像更新失败');
+        }
+      })
+      .catch(error => {
+        console.error('updateAvatar error:', error);
+        this.$message.error('头像更新失败');
+      });
+    },
+    // 提交修改
+    handleSubmit() {
+      this.$refs.form.validate(valid => {
+        if (!valid) {
+          return;
+        }
+
+        if (this.editType === 'name') {
+          this.$axios({
+            method: 'put',
+            url: '/user/name',
+            data: {
+              username: this.formData.newName
+            }
+          })
+          .then(response => {
+            if (response.code === 1000) {
+              this.$message.success('用户名修改成功');
+              this.editDialogVisible = false;
+              this.getUserInfo();
+              // 更新 Vuex store 中的用户信息
+              this.$store.dispatch('getUserInfo');
+            } else {
+              this.$message.error(response.message || '用户名修改失败');
+            }
+          })
+          .catch(error => {
+            console.error('updateName error:', error);
+            this.$message.error('用户名修改失败');
+          });
+        } else if (this.editType === 'password') {
+          this.$axios({
+            method: 'put',
+            url: '/user/password',
+            data: {
+              old_password: this.formData.oldPassword,
+              new_password: this.formData.newPassword
+            }
+          })
+          .then(response => {
+            if (response.code === 1000) {
+              this.$message.success('密码修改成功');
+              this.editDialogVisible = false;
+              // 清空表单
+              this.formData = {
+                newName: '',
+                oldPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+              };
+            } else {
+              this.$message.error(response.message || '密码修改失败');
+            }
+          })
+          .catch(error => {
+            console.error('updatePassword error:', error);
+            this.$message.error('密码修改失败');
+          });
+        }
+      });
+    }
   },
   mounted() {
     this.getUserInfo();
@@ -224,6 +446,12 @@ export default {
         .user-id {
           color: #666;
           margin: 0;
+        }
+
+        .edit-buttons {
+          margin-top: 12px;
+          display: flex;
+          gap: 8px;
         }
       }
     }
