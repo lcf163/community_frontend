@@ -26,6 +26,13 @@
               @click.stop="$emit('show-reply', comment)">
               回复
             </el-button>
+            <button 
+              v-if="comment.author_id === currentUserId" 
+              class="action-btn edit-btn" 
+              @click="$emit('edit-comment', comment)"
+            >
+              编辑
+            </button>
             <vote-info-bar
               :author="comment.author_name"
               :time="formatTime(comment.create_time)"
@@ -44,28 +51,17 @@
                 :avatar-src="reply.author_avatar"
               />
               <div class="reply-content">
-                <!-- <template v-if="reply.reply_to_id">
-                  <span class="reply-to">@{{ reply.reply_to_name }}：</span>
-                </template> -->
                 <span class="reply-to">@{{ reply.reply_to_name }}：</span>
                 {{ reply.content }}
-              </div>
-              <div class="reply-actions">
-                <div class="action-left">
-                  <el-button 
-                    type="text" 
-                    class="reply-btn"
-                    @click.stop="$emit('show-reply', reply, comment)">
-                    回复
-                  </el-button>
-                </div>
-                <div class="action-right">
-                  <vote-info-bar
-                    :author="reply.author_name"
-                    :time="formatTime(reply.create_time)"
-                    :vote-num="reply.vote_num"
-                    @vote="$emit('vote-comment', reply.comment_id, $event)"
-                  />
+                <div class="reply-actions">
+                  <button class="action-btn" @click="$emit('show-reply', reply, comment)">回复</button>
+                  <button 
+                    v-if="reply.author_id === currentUserId" 
+                    class="action-btn edit-btn" 
+                    @click="$emit('edit-comment', reply)"
+                  >
+                    编辑
+                  </button>
                 </div>
               </div>
               <!-- 二级回复的回复框 -->
@@ -138,6 +134,10 @@ export default {
     submitting: {
       type: Boolean,
       default: false
+    },
+    currentUserId: {
+      type: [String, Number],
+      required: true
     }
   },
   data() {
@@ -235,18 +235,37 @@ export default {
 
     .comment-actions {
       display: flex;
-      justify-content: flex-start;
       align-items: center;
       margin: 4px 0;
-      gap: 16px;
-      
+
       .reply-btn {
-        padding: 0;
-        margin: 0;
-        height: auto;
+        color: #878A8C !important;
+        font-size: 12px;
+        padding: 4px 8px;
         
         &:hover {
-          color: #0079d3;
+          color: #1A1A1B !important;
+        }
+      }
+
+      .action-btn {
+        padding: 4px 8px;
+        background: transparent;
+        border: none;
+        color: #878A8C;
+        font-size: 12px;
+        cursor: pointer;
+        
+        &:hover {
+          color: #1A1A1B;
+        }
+      }
+
+      .edit-btn {
+        color: #878A8C;
+        
+        &:hover {
+          color: #1A1A1B;
         }
       }
     }
@@ -294,6 +313,47 @@ export default {
           color: #1484d7;
           text-decoration: underline;
         }
+      }
+    }
+  }
+}
+
+.reply-content {
+  .reply-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    
+    .action-btn {
+      padding: 4px 8px;
+      background: transparent;
+      border: none;
+      color: #878A8C;
+      font-size: 12px;
+      cursor: pointer;
+      
+      &:hover {
+        color: #1A1A1B;
+      }
+    }
+
+    .edit-btn {
+      color: #878A8C;
+      
+      &:hover {
+        color: #1A1A1B;
+      }
+    }
+  }
+}
+
+.comment {
+  .comment-actions {
+    .action-btn {
+      color: #878A8C;
+      
+      &:hover {
+        color: #1A1A1B;
       }
     }
   }

@@ -48,9 +48,11 @@
         :comments="comments"
         :comment-count="post.comment_count"
         :submitting="submitting"
+        :current-user-id="userId"
         @show-reply="showReplyInput"
         @cancel-reply="cancelReply"
         @submit-reply="submitReply"
+        @edit-comment="handleEditComment"
         @vote-comment="voteComment"
       />
       <page-bar
@@ -80,6 +82,13 @@
       :visible.sync="editDialogVisible"
       :initial-data="editForm"
       @submit="submitEdit"
+    />
+
+    <comment-dialog
+      type="edit-comment"
+      :visible.sync="commentEditDialogVisible"
+      :initial-data="commentEditForm"
+      @submit="submitEditComment"
     />
   </div>
 </template>
@@ -141,6 +150,12 @@ export default {
       pageNumber: 1,
       pageSize: DEFAULT_PAGE_SIZE,  // 修改为使用常量
       total: 0,
+      editingComment: null,
+      commentEditDialogVisible: false,
+      commentEditForm: {
+        content: ''
+      },
+      userId: this.$store.getters.userID
     };
   },
   computed: {
@@ -488,6 +503,46 @@ export default {
       this.pageNumber = val;
       this.getComments();
     },
+    // 显示编辑评论对话框
+    handleEditComment(comment) {
+      this.editingComment = comment;
+      this.commentEditForm = { content: comment.content };
+      this.commentEditDialogVisible = true;
+    },
+    
+    // 提交编辑后的评论
+    submitEditComment(formData) {
+      if (!this.editingComment || !formData.content.trim()) return;
+      
+      const commentId = parseInt(this.editingComment.comment_id, 10);
+      if (isNaN(commentId)) {
+        this.$message.error('无效的评论ID');
+        return;
+      }
+
+      this.$axios({
+        method: 'put',
+        url: '/comment',
+        data: {
+          comment_id: commentId,
+          content: formData.content
+        }
+      })
+      .then(response => {
+        if (response.code === 1000) {
+          this.$message.success('修改成功');
+          this.getComments(); // 刷新评论列表
+          this.commentEditDialogVisible = false;
+          this.editingComment = null;
+        } else {
+          this.$message.error(response.message || '修改失败');
+        }
+      })
+      .catch(error => {
+        console.error('editComment error:', error);
+        this.$message.error('修改失败');
+      });
+    }
   },
   watch: {
     post: {

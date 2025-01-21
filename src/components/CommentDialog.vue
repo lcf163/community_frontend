@@ -25,6 +25,29 @@
       </span>
     </el-dialog>
 
+    <!-- 编辑评论对话框 -->
+    <el-dialog
+      v-else-if="type === 'edit-comment'"
+      title="编辑评论"
+      :visible.sync="visible"
+      width="50%"
+      @close="handleClose">
+      <el-form :model="form">
+        <el-form-item>
+          <el-input
+            type="textarea"
+            :rows="4"
+            placeholder="编辑你的评论..."
+            v-model="form.content">
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handleClose">取 消</el-button>
+        <el-button type="primary" @click="handleSubmit">确 定</el-button>
+      </span>
+    </el-dialog>
+
     <!-- 评论输入区域 -->
     <div v-else class="comment-input">
       <el-input
@@ -66,8 +89,8 @@ export default {
     },
     type: {
       type: String,
-      default: 'comment', // 'edit' 或 'comment'
-      validator: value => ['edit', 'comment'].includes(value)
+      default: 'comment',
+      validator: value => ['edit', 'comment', 'edit-comment'].includes(value)
     },
     submitting: {
       type: Boolean,
@@ -100,11 +123,12 @@ export default {
         this.$message.error('标题和内容不能为空')
         return
       }
-      if (this.type === 'comment' && !this.form.content.trim()) {
+      if ((this.type === 'comment' || this.type === 'edit-comment') && !this.form.content.trim()) {
         this.$message.error('评论内容不能为空')
         return
       }
       this.$emit('submit', { ...this.form })
+      this.$emit('update:visible', false)
     }
   }
 }
