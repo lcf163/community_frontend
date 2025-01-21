@@ -20,12 +20,11 @@
         <div class="c-right">
           <div class="c-content">{{ comment.content }}</div>
           <div class="comment-actions">
-            <el-button 
-              type="text" 
-              class="reply-btn"
+            <button 
+              class="action-btn"
               @click.stop="$emit('show-reply', comment)">
               回复
-            </el-button>
+            </button>
             <button 
               v-if="comment.author_id === currentUserId" 
               class="action-btn edit-btn" 
@@ -236,36 +235,19 @@ export default {
     .comment-actions {
       display: flex;
       align-items: center;
-      margin: 4px 0;
-
-      .reply-btn {
-        color: #878A8C !important;
-        font-size: 12px;
-        padding: 4px 8px;
-        
-        &:hover {
-          color: #1A1A1B !important;
-        }
-      }
+      gap: 16px;
+      margin: 8px 0;
 
       .action-btn {
-        padding: 4px 8px;
-        background: transparent;
+        padding: 0;
+        background: none;
         border: none;
-        color: #878A8C;
         font-size: 12px;
+        color: #878A8C;
         cursor: pointer;
         
         &:hover {
-          color: #1A1A1B;
-        }
-      }
-
-      .edit-btn {
-        color: #878A8C;
-        
-        &:hover {
-          color: #1A1A1B;
+          color: #1890ff;
         }
       }
     }

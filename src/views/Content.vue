@@ -310,11 +310,12 @@ export default {
       });
     },
     getCommentReplies(comment) {
-      if (!comment || !comment.comment_id) return;
+      const commentId = parseInt(comment.comment_id, 10);
+      if (isNaN(commentId)) return;
 
       this.$axios({
         method: 'get',
-        url: `/comment/reply/${comment.comment_id}`,
+        url: `/comment/reply/${commentId}`,
       }).then(response => {
         if (response.code === 1000 && Array.isArray(response.data)) {
           const replies = response.data.map(reply => {
@@ -351,15 +352,18 @@ export default {
         method: 'post',
         url: '/comment',
         data: {
-          post_id: numericPostId,  // 使用数字类型的 ID
+          post_id: numericPostId,
           content: formData.content
         }
       })
       .then(response => {
         if (response.code === 1000) {
           this.$message.success('评论成功')
+          // 更新评论列表
           this.getComments()
-          this.showCommentInput = false  // 修正：评论成功后关闭输入框
+          // 更新帖子详情以刷新评论数量
+          this.getPostDetail()
+          this.showCommentInput = false
         } else {
           this.$message.error(response.message)
         }
@@ -478,7 +482,8 @@ export default {
       }).then(response => {
         if (response.code === 1000) {
           this.$message.success('回复成功');
-          this.getComments();
+          // 只更新当前评论的回复列表
+          this.getCommentReplies(parentComment);
           this.$set(comment, 'showReplyInput', false);
           if (comment.parentComment) {
             this.$delete(comment, 'parentComment');
