@@ -269,13 +269,14 @@ export default {
       }
     },
     getComments() {
-      const postId = this.$route.params.id;
+      const postId = parseInt(this.$route.params.id, 10);
       if (!postId) return;
 
       this.$axios({
         method: "get",
-        url: `/comment/${postId}`,
+        url: '/comments',
         params: {
+          post_id: postId,
           page: this.pageNumber,
           size: this.pageSize
         }
@@ -285,7 +286,6 @@ export default {
           this.total = response.data.page.total;
           const commentList = response.data.list || [];
           const comments = commentList.map(comment => {
-            // 移除本地头像处理逻辑，直接使用后端返回的头像URL
             this.$set(comment, 'showReplyInput', false);
             this.$set(comment, 'replies', []);
             
@@ -293,7 +293,6 @@ export default {
             if (comment.reply_count && comment.reply_count > 0) {
               this.getCommentReplies(comment);
             }
-            
             return comment;
           });
           
@@ -315,21 +314,34 @@ export default {
 
       this.$axios({
         method: 'get',
-        url: `/comment/reply/${commentId}`,
-      }).then(response => {
+        url: '/comments',
+        params: {
+          comment_id: commentId
+        }
+      })
+      .then(response => {
         if (response.code === 1000 && Array.isArray(response.data)) {
-          const replies = response.data.map(reply => {
-            this.$set(reply, 'showReplyInput', false);
-            this.$set(reply, 'author_avatar', reply.author_avatar);
-            return reply;
-          });
+          // 后端直接返回回复数组，不需要 .list
+          const replies = response.data.map(reply => ({
+            ...reply,
+            showReplyInput: false,
+            // 头像URL已经是完整路径，不需要处理
+            avatar_url: reply.author_avatar,
+            reply_to_info: {
+              name: reply.reply_to_name,
+              id: reply.reply_to_uid,
+              avatar: reply.reply_to_avatar
+            }
+          }));
           
           this.$set(comment, 'replies', replies);
+          this.$set(comment, 'reply_count', replies.length);
         } else {
-          this.$message.error(response.message || '获取回复列表失败');
+          console.error('获取回复列表失败:', response.message);
           this.$set(comment, 'replies', []);
         }
-      }).catch(error => {
+      })
+      .catch(error => {
         console.error('getCommentReplies error:', error);   
         this.$set(comment, 'replies', []);
       });
@@ -477,7 +489,7 @@ export default {
       this.submitting = true;
       this.$axios({
         method: 'post',
-        url: '/comment/reply',
+        url: '/comment',
         data: replyData
       }).then(response => {
         if (response.code === 1000) {

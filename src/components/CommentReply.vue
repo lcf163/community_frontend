@@ -61,6 +61,12 @@
                   >
                     编辑
                   </button>
+                  <vote-info-bar
+                    :author="reply.author_name"
+                    :time="formatTime(reply.create_time)"
+                    :vote-num="reply.vote_num"
+                    @vote="$emit('vote-comment', reply.comment_id, $event)"
+                  />
                 </div>
               </div>
               <!-- 二级回复的回复框 -->
@@ -257,7 +263,7 @@ export default {
       margin-top: 8px;
       
       .reply-item {
-        margin-bottom: 8px;
+        padding: 8px 0;
         
         .reply-content {
           margin-left: 8px;
@@ -266,6 +272,33 @@ export default {
           .reply-to {
             color: #0079d3;
             font-weight: 600;
+          }
+
+          .reply-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 4px;
+
+            :deep(.vote-info-bar) {
+              display: flex;
+              align-items: center;
+              border: none;
+              padding: 0;
+            }
+
+            .action-btn {
+              background: none;
+              border: none;
+              color: #878A8C;
+              font-size: 12px;
+              cursor: pointer;
+              padding: 4px 8px;
+              
+              &:hover {
+                color: #1A1A1B;
+              }
+            }
           }
         }
       }
@@ -276,10 +309,6 @@ export default {
       padding: 8px;
       background-color: #f6f7f8;
       border-radius: 4px;
-
-      &.nested {
-        margin-left: 20px;
-      }
     }
 
     .show-more {
@@ -295,47 +324,6 @@ export default {
           color: #1484d7;
           text-decoration: underline;
         }
-      }
-    }
-  }
-}
-
-.reply-content {
-  .reply-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-    
-    .action-btn {
-      padding: 4px 8px;
-      background: transparent;
-      border: none;
-      color: #878A8C;
-      font-size: 12px;
-      cursor: pointer;
-      
-      &:hover {
-        color: #1A1A1B;
-      }
-    }
-
-    .edit-btn {
-      color: #878A8C;
-      
-      &:hover {
-        color: #1A1A1B;
-      }
-    }
-  }
-}
-
-.comment {
-  .comment-actions {
-    .action-btn {
-      color: #878A8C;
-      
-      &:hover {
-        color: #1A1A1B;
       }
     }
   }
