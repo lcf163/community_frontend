@@ -1,9 +1,6 @@
 <template>
   <div class="content">
-    <div class="page-header">
-      <!-- <button class="back-btn" @click="goBack">返回</button> -->
-      <h2 class="page-title">社区列表</h2>
-    </div>
+    <h2 class="page-title">社区列表</h2>
     <div class="community-list">
       <ul class="community-grid">
         <li v-for="community in communityList" 
@@ -12,10 +9,10 @@
             @click="goCommunityDetail(community.community_id)">
           <div class="community-card">
             <div class="community-info">
-              <h3 class="community-name">{{ community.community_name }}</h3>
-              <p class="community-desc">{{ community.introduction || '暂无简介' }}</p>
+              <h3>{{ community.community_name }}</h3>
+              <p>{{ community.introduction || '暂无简介' }}</p>
             </div>
-            <button class="join-btn" @click.stop="goCommunityDetail(community.community_id)">进入社区</button>
+            <button @click.stop="goCommunityDetail(community.community_id)">进入社区</button>
           </div>
         </li>
       </ul>
@@ -34,7 +31,7 @@
 <script>
 import PageBar from '@/components/PageBar.vue'
 
-const PAGE_SIZES = [3, 6, 9];
+const PAGE_SIZES = [5, 10];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
 
 export default {
@@ -108,81 +105,76 @@ export default {
 .content {
   padding: 20px;
   margin-top: 48px;
-  
-  .page-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-top: 10px;
-    
-    .page-title {
-      font-size: 22px;
-      margin: 0;
-      flex-grow: 1;
-      text-align: center;
-      padding-right: 100px;
-    }
-  }
 
-  .community-list {
-    margin-top: 20px;
-  }
-
-  .community-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    
-    .community-item {
-      cursor: pointer;
-      
-      .community-card {
-        background: #fff;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        
-        &:hover {
-          box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-
-        .community-info {
-          .community-name {
-            font-size: 18px;
-            margin-bottom: 10px;
-          }
-
-          .community-desc {
-            color: #666;
-            margin-bottom: 10px;
-            font-size: 14px;
-          }
-        }
-
-        .join-btn {
-          margin-top: 15px;
-          padding: 8px 16px;
-          background-color: #0079d3;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-
-          &:hover {
-            background-color: #006cbd;
-          }
-        }
-      }
-    }
+  .page-title {
+    text-align: center;
+    margin-bottom: 32px;
+    font-size: 22px;
   }
 }
 
-.pagination-block {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  background-color: #fff;
-  padding: 16px;
-  border-radius: 4px;
+.community-list {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+
+  .community-grid {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .community-card {
+    display: flex;
+    align-items: center;
+    padding: 24px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .community-info {
+      flex: 1;
+      padding-right: 24px;
+
+      h3 {
+        font-size: 20px;
+        margin-bottom: 8px;
+        color: #303133;
+      }
+
+      p {
+        color: #606266;
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+    }
+
+    button {
+      padding: 8px 20px;
+      background-color: #409eff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: #66b1ff;
+      }
+    }
+  }
 }
 </style> 
