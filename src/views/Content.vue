@@ -31,6 +31,13 @@
                 @click="showEditDialog">
                 <i class="el-icon-edit"></i> 编辑帖子
               </el-button>
+              <el-button
+                v-if="isAuthor"
+                type="text"
+                class="delete-btn"
+                @click="handleDeletePost">
+                <i class="el-icon-delete"></i> 删除帖子
+              </el-button>
             </div>
           </div>
         </div>
@@ -592,6 +599,30 @@ export default {
         this.pageNumber--;
         this.getComments();
       }
+    },
+    handleDeletePost() {
+      this.$confirm('确定要删除这篇帖子吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$axios({
+          method: 'delete',
+          url: `/post/${this.post.post_id}`
+        }).then(response => {
+          if (response.code === 1000) {
+            this.$message.success('删除成功');
+            this.$router.push('/'); // 删除成功后返回首页
+          } else {
+            this.$message.error(response.message || '删除失败');
+          }
+        }).catch(error => {
+          console.error('删除帖子失败:', error);
+          this.$message.error('删除失败');
+        });
+      }).catch(() => {
+        // 取消删除操作
+      });
     }
   },
   watch: {
@@ -1213,6 +1244,29 @@ export default {
       background-color: #f6f7f8;
       border-radius: 4px;
     }
+  }
+}
+
+.post-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+
+  .edit-btn, .delete-btn {
+    font-size: 14px;
+    padding: 0;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  .edit-btn {
+    color: #0079d3;
+  }
+
+  .delete-btn {
+    color: #ff4d4f;
   }
 }
 </style>
