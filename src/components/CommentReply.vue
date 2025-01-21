@@ -25,13 +25,10 @@
               @click.stop="$emit('show-reply', comment)">
               回复
             </button>
-            <button 
-              v-if="comment.author_id === currentUserId" 
-              class="action-btn edit-btn" 
-              @click="$emit('edit-comment', comment)"
-            >
-              编辑
-            </button>
+            <template v-if="comment.author_id === currentUserId">
+              <button class="action-btn" @click="$emit('edit-comment', comment)">编辑</button>
+              <button class="action-btn delete-btn" @click="handleDelete(comment.comment_id, true)">删除</button>
+            </template>
             <vote-info-bar
               :author="comment.author_name"
               :time="formatTime(comment.create_time)"
@@ -54,13 +51,10 @@
                 {{ reply.content }}
                 <div class="reply-actions">
                   <button class="action-btn" @click="$emit('show-reply', reply, comment)">回复</button>
-                  <button 
-                    v-if="reply.author_id === currentUserId" 
-                    class="action-btn edit-btn" 
-                    @click="$emit('edit-comment', reply)"
-                  >
-                    编辑
-                  </button>
+                  <template v-if="reply.author_id === currentUserId">
+                    <button class="action-btn" @click="$emit('edit-comment', reply)">编辑</button>
+                    <button class="action-btn delete-btn" @click="handleDelete(reply.comment_id, false)">删除</button>
+                  </template>
                   <vote-info-bar
                     :author="reply.author_name"
                     :time="formatTime(reply.create_time)"
@@ -194,6 +188,39 @@ export default {
         // 强制更新组件
         this.$forceUpdate();
       }
+    },
+    handleDelete(commentId, isParentComment = false) {
+      const message = isParentComment ? 
+        '确定要删除这条评论及其所有回复吗？' : 
+        '确定要删除这条评论吗？';
+
+      this.$confirm(message, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 根据是否为父评论选择不同的删除接口
+        const url = isParentComment ? 
+          `/comments/${commentId}` : 
+          `/comment/${commentId}`;
+
+        this.$axios({
+          method: 'delete',
+          url: url
+        }).then(response => {
+          if (response.code === 1000) {
+            this.$message.success('删除成功');
+            this.$emit('delete-success', commentId, isParentComment);
+          } else {
+            this.$message.error(response.message || '删除失败');
+          }
+        }).catch(error => {
+          console.error('删除评论失败:', error);
+          this.$message.error('删除失败');
+        });
+      }).catch(() => {
+        // 取消删除操作
+      });
     }
   }
 }
@@ -280,13 +307,6 @@ export default {
             gap: 16px;
             margin-top: 4px;
 
-            :deep(.vote-info-bar) {
-              display: flex;
-              align-items: center;
-              border: none;
-              padding: 0;
-            }
-
             .action-btn {
               background: none;
               border: none;
@@ -326,6 +346,39 @@ export default {
         }
       }
     }
+  }
+}
+
+.comment-actions, .reply-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+
+  .action-btn {
+    background: none;
+    border: none;
+    color: #878A8C;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    
+    &:hover {
+      color: #1A1A1B;
+    }
+
+    &.delete-btn {
+      &:hover {
+        color: #ff4d4f;
+      }
+    }
+  }
+
+  :deep(.vote-info-bar) {
+    display: flex;
+    align-items: center;
+    border: none;
+    padding: 0;
   }
 }
 </style>

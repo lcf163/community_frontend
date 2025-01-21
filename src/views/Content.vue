@@ -54,6 +54,7 @@
         @submit-reply="submitReply"
         @edit-comment="handleEditComment"
         @vote-comment="voteComment"
+        @delete-success="handleDeleteSuccess"
       />
       <page-bar
         :current-page="pageNumber"
@@ -559,6 +560,38 @@ export default {
         console.error('editComment error:', error);
         this.$message.error('修改失败');
       });
+    },
+    handleDeleteSuccess(commentId, isParentComment) {
+      if (isParentComment) {
+        // 如果是父评论，直接从列表中移除该评论及其所有回复
+        this.comments = this.comments.filter(comment => comment.comment_id !== commentId);
+        
+        // 更新评论总数
+        if (this.total) {
+          const removedComment = this.comments.find(c => c.comment_id === commentId);
+          const removedCount = 1 + (removedComment?.replies?.length || 0);
+          this.total = Math.max(0, this.total - removedCount);
+        }
+      } else {
+        // 如果是回复，只移除对应的回复
+        this.comments = this.comments.map(comment => {
+          if (comment.replies) {
+            const oldLength = comment.replies.length;
+            comment.replies = comment.replies.filter(reply => reply.comment_id !== commentId);
+            // 如果确实删除了回复，更新总数
+            if (oldLength > comment.replies.length && this.total) {
+              this.total = Math.max(0, this.total - 1);
+            }
+          }
+          return comment;
+        });
+      }
+
+      // 如果当前页没有数据了，且不是第一页，则加载上一页
+      if (this.comments.length === 0 && this.pageNumber > 1) {
+        this.pageNumber--;
+        this.getComments();
+      }
     }
   },
   watch: {
