@@ -3,6 +3,7 @@
     <div class="page">
       <HeadBar />
       <router-view />
+      <ToTop />
     </div>
   </div>
 </template>
@@ -10,9 +11,13 @@
 
 <script>
 import HeadBar from "@/components/HeadBar.vue";
+import ToTop from './components/ToTop.vue'
+
 export default {
+  name: 'App',
   components: {
-    HeadBar
+    HeadBar,
+    ToTop
   }
 };
 </script>
