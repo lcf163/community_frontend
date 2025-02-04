@@ -51,14 +51,18 @@ export default {
     goDetail(postId) {
       this.$emit('detail', postId)
     },
-    handleVote(type) {
-      // 确保 post_id 是数字类型
-      const postId = parseInt(this.post.post_id, 10);
-      
+    handleVote(direction) {
+      // 确保 post_id 存在
+      if (!this.post.post_id) {
+        this.$message.error('无效的帖子ID');
+        return;
+      }
+
       // 发送一个对象作为事件参数
       this.$emit('vote', {
-        postId: postId,
-        type: type
+        target_id: String(this.post.post_id), // 确保是字符串类型
+        target_type: 1, // 1表示帖子
+        direction: direction // 投票方向：1(赞成)、0(取消)、-1(反对)
       });
     }
   }

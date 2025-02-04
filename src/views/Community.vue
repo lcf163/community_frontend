@@ -133,10 +133,8 @@ export default {
 			});
 		},
 		formatTime,
-		handleVote({ postId, type }) {
-			// 确保 postId 是数字类型
-			const numericPostId = parseInt(postId, 10);
-			if (isNaN(numericPostId)) {
+		handleVote({ target_id, target_type, direction }) {
+			if (!target_id) {
 				this.$message.error('无效的帖子ID');
 				return;
 			}
@@ -145,13 +143,13 @@ export default {
 				method: "post",
 				url: "/vote",
 				data: {
-					target_id: numericPostId,
-					target_type: 1,
-					direction: type
+					target_id: String(target_id),
+					target_type: target_type,
+					direction: direction
 				}
 			})
 			.then(response => {
-				if (response.code == 1000) {
+				if (response.code === 1000) {
 					this.getCommunityPostList();
 				} else {
 					this.$message.error(response.message || '投票失败');

@@ -229,18 +229,16 @@ export default {
         this.$message.error('获取用户帖子失败');
       });
     },
-    handleVote({ postId, type }) {
-      // 直接使用 postId 和 type
-      const numericPostId = parseInt(postId, 10);
-      if (isNaN(numericPostId)) {
+    handleVote({ target_id, target_type, direction }) {
+      if (!target_id) {
         this.$message.error('无效的帖子ID');
         return;
       }
 
       this.$axios.post('/vote', {
-        target_id: numericPostId,
-        target_type: 1,
-        direction: type
+        target_id: String(target_id),
+        target_type: target_type,
+        direction: direction
       })
       .then(response => {
         if (response.code === 1000) {

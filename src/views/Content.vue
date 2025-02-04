@@ -202,15 +202,13 @@ export default {
       });
     },
     votePost(post_id, direction) {
-      // post_id 可能来自 URL 参数、DOM事件等，默认都是字符串
-      const numericPostId = parseInt(post_id, 10);
-      if (isNaN(numericPostId)) {
+      if (!post_id) {
         this.$message.error('无效的帖子ID');
         return;
       }
 
       this.$axios.post("/vote", {
-        target_id: numericPostId, // 确保是数字类型
+        target_id: String(post_id),  // 使用字符串类型
         target_type: 1,
         direction: direction
       })
@@ -227,9 +225,7 @@ export default {
       });
     },
     voteComment(comment_id, direction) {
-      // 确保 comment_id 是数字类型
-      const numericCommentId = parseInt(comment_id, 10);
-      if (isNaN(numericCommentId)) {
+      if (!comment_id) {
         this.$message.error('无效的评论ID');
         return;
       }
@@ -238,9 +234,9 @@ export default {
         method: "post",
         url: "/vote",
         data: {
-          target_id: numericCommentId, // 确保是数字类型
+          target_id: String(comment_id),  // 使用字符串类型
           target_type: 2,
-          direction: direction,
+          direction: direction
         }
       })
       .then(response => {
@@ -277,14 +273,14 @@ export default {
       }
     },
     getComments() {
-      const postId = parseInt(this.$route.params.id, 10);
+      const postId = this.$route.params.id;  // 直接使用字符串
       if (!postId) return;
 
       this.$axios({
         method: "get",
         url: '/comments',
         params: {
-          post_id: postId,
+          post_id: postId,  // 使用字符串
           page: this.pageNumber,
           size: this.pageSize
         }
@@ -317,14 +313,14 @@ export default {
       });
     },
     getCommentReplies(comment) {
-      const commentId = parseInt(comment.comment_id, 10);
-      if (isNaN(commentId)) return;
+      const commentId = comment.comment_id;  // 直接使用字符串
+      if (!commentId) return;
 
       this.$axios({
         method: 'get',
         url: '/comments',
         params: {
-          comment_id: commentId
+          comment_id: commentId  // 使用字符串
         }
       })
       .then(response => {
@@ -361,18 +357,11 @@ export default {
       if (!formData.content.trim()) return
       this.submitting = true
       
-      // 确保 post_id 是数字类型
-      const numericPostId = parseInt(this.post.post_id, 10);
-      if (isNaN(numericPostId)) {
-        this.$message.error('无效的帖子ID');
-        return;
-      }
-
       this.$axios({
         method: 'post',
         url: '/comment',
         data: {
-          post_id: numericPostId,
+          post_id: this.post.post_id,
           content: formData.content
         }
       })
@@ -404,9 +393,7 @@ export default {
       this.editDialogVisible = true;
     },
     submitEdit(formData) {
-      // 确保 post_id 是数字类型
-      const numericPostId = parseInt(this.post.post_id, 10);
-      if (isNaN(numericPostId)) {
+      if (!this.post.post_id) {
         this.$message.error('无效的帖子ID');
         return;
       }
@@ -415,7 +402,7 @@ export default {
         method: 'put',
         url: "/post",
         data: {
-          post_id: numericPostId, // 确保发送的是数字类型
+          post_id: String(this.post.post_id), // 使用字符串类型
           title: formData.title,
           content: formData.content
         }
@@ -472,29 +459,34 @@ export default {
 
     // 提交回复
     submitReply(formData, comment) {
-      if (!formData.content.trim()) return;
+      // 参数验证
+      if (!comment) {
+        this.$message.error('评论参数无效');
+        return;
+      }
+
+      // 获取正确的父评论
+      const actualParentComment = comment.parentComment || comment;
+
+      const postId = this.$route.params.id;
+      const parentId = actualParentComment.comment_id;
+      const replyToUid = comment.author_id;
       
-      const parentComment = comment.parentComment || comment;
-      
-      // 确保所有 ID 都是数字类型
-      const numericPostId = parseInt(this.post.post_id, 10);
-      const numericParentId = parseInt(parentComment.comment_id, 10);
-      const numericReplyToUid = parseInt(comment.author_id, 10);
-      
-      if (isNaN(numericPostId) || isNaN(numericParentId) || isNaN(numericReplyToUid)) {
-        this.$message.error('无效的ID参数');
+      if (!postId || !parentId || !replyToUid) {
+        this.$message.error('无效的参数');
         return;
       }
 
       const replyData = {
-        post_id: numericPostId,
-        parent_id: numericParentId,
+        post_id: String(postId),
+        parent_id: String(parentId),
         content: formData.content,
-        reply_to_uid: numericReplyToUid,
+        reply_to_uid: String(replyToUid),
         reply_to_name: comment.author_name
       };
 
       this.submitting = true;
+
       this.$axios({
         method: 'post',
         url: '/comment',
@@ -503,7 +495,7 @@ export default {
         if (response.code === 1000) {
           this.$message.success('回复成功');
           // 只更新当前评论的回复列表
-          this.getCommentReplies(parentComment);
+          this.getCommentReplies(actualParentComment);
           this.$set(comment, 'showReplyInput', false);
           if (comment.parentComment) {
             this.$delete(comment, 'parentComment');
@@ -539,8 +531,8 @@ export default {
     submitEditComment(formData) {
       if (!this.editingComment || !formData.content.trim()) return;
       
-      const commentId = parseInt(this.editingComment.comment_id, 10);
-      if (isNaN(commentId)) {
+      const commentId = this.editingComment.comment_id;
+      if (!commentId) {
         this.$message.error('无效的评论ID');
         return;
       }
