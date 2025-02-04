@@ -128,7 +128,14 @@ export default {
         return
       }
       this.$emit('submit', { ...this.form })
+      this.resetForm()
       this.$emit('update:visible', false)
+    },
+    resetForm() {
+      this.form = {
+        title: '',
+        content: ''
+      }
     }
   }
 }
