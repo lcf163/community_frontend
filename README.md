@@ -71,6 +71,7 @@ Community Frontend 是一个基于 Vue.js 的现代前端应用程序，提供�
     - 自定义主题样式
 
 ## 项目结构
+```
 /src
   ├── api                 # API 相关
   │   ├── config.js       # API 配置
