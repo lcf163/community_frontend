@@ -107,8 +107,7 @@ import VoteInfoBar from '@/components/VoteInfoBar.vue';
 import CommentDialog from '@/components/CommentDialog.vue';
 import CommentReply from '@/components/CommentReply.vue';
 import PageBar from '@/components/PageBar.vue'
-import { formatTime } from '@/utils/timeFormat';
-import { getAvatarUrl } from '@/config/api';
+import { formatTime, getAvatarUrl } from '@/utils';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css'; // 使用 GitHub 风格的代码高亮主题
@@ -384,7 +383,6 @@ export default {
         this.submitting = false
       })
     },
-    formatTime,
     showEditDialog() {
       this.editForm = {
         title: this.post.title,
@@ -615,7 +613,9 @@ export default {
       }).catch(() => {
         // 取消删除操作
       });
-    }
+    },
+    formatTime,  // 添加到 methods 中
+    getAvatarUrl,
   },
   watch: {
     post: {

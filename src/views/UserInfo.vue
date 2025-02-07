@@ -106,8 +106,7 @@
 <script>
 import PostList from '@/components/PostList.vue';
 import PageBar from '@/components/PageBar.vue';
-import { formatTime } from '@/utils/timeFormat';
-import { getAvatarUrl } from '@/config/api'
+import { formatTime, getAvatarUrl } from '@/utils';
 
 const PAGE_SIZES = [5, 10];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];  // 默认使用第一个值

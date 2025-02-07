@@ -5,7 +5,7 @@ import 'element-ui/lib/theme-chalk/index.css'
 import App from './App.vue' // 主应用组件
 import router from './router' // 路由配置
 import store from './store' // Vuex 状态管理
-import axios from './service/api' // Axios API 服务
+import axios from '@/api' // Axios API 服务
 import { marked } from 'marked' // 添加 marked 导入
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'

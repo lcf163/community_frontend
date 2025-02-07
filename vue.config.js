@@ -17,4 +17,12 @@ module.exports = {
     publicPath: process.env.NODE_ENV === 'production'
         ? '/'  // 生产环境路径
         : '/', // 开发环境路径
+
+    configureWebpack: {
+        resolve: {
+            alias: {
+                '@': require('path').join(__dirname, 'src')
+            }
+        }
+    }
 }

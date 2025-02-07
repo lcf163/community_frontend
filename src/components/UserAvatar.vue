@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import { getAvatarUrl } from '@/config/api';
+import { getAvatarUrl } from '@/utils';
 
 export default {
   name: 'UserAvatar',
