@@ -3,6 +3,11 @@
 ## 项目简介
 Community Frontend 是一个基于 Vue.js 的现代前端应用程序，提供一个用户友好的社区平台。用户可以在平台上发布帖子、评论、投票，与其他用户进行互动。该项目采用组件化开发，支持响应式设计，适用于各种设备。
 
+## 项目预览
+![image](./src/assets/images/1.png)
+![image](./src/assets/images/2.png)
+![image](./src/assets/images/3.png)
+
 ## 技术栈
 - **Vue.js 2.x**: 核心前端框架
 - **Vue Router**: 路由管理
